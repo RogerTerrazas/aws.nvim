@@ -1,0 +1,41 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# TypeScript build output
+rplugin/node/nvim-aws/dist/
+
+# Compiled JavaScript files
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
+
+# BUT keep any committed JS/TS config files
+!rplugin/node/nvim-aws/package.json
+!rplugin/node/nvim-aws/tsconfig.json
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Neovim plugin manifest (generated per user)
+.rplugin.vim

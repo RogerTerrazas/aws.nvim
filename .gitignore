@@ -8,6 +8,7 @@ pnpm-debug.log*
 
 # TypeScript build output
 rplugin/node/nvim-aws/dist/
+rplugin/node/nvim-aws/coverage/
 
 # Compiled JavaScript files
 *.js

@@ -1,5 +1,5 @@
 import { NvimPlugin } from 'neovim'
-import { initializeDDBTablesView } from './views/ddb/tables'
+import { initializeDDBTablesView } from './views/ddb/tables/tables'
 
 // Plugin entry point for Neovim remote plugin
 export default function (plugin: NvimPlugin): void {

@@ -1,5 +1,5 @@
 import { Neovim } from 'neovim'
-import { listDynamoDBTables } from '../../accessors/ddb/tables'
+import { listDynamoDBTables } from '../../../accessors/ddb/tables'
 
 export async function initializeDDBTablesView(
   nvim: Neovim,
@@ -10,6 +10,8 @@ export async function initializeDDBTablesView(
 
   // Convert response to formatted JSON lines
   const lines: string[] = JSON.stringify(tableNames, null, 2).split('\n')
+
+  // Create mapped model based on response
 
   // Create a new buffer
   const buffer = await nvim.createBuffer(false, true)
@@ -24,4 +26,8 @@ export async function initializeDDBTablesView(
 
   // Set the buffer to the window
   await nvim.call('nvim_win_set_buf', [window, buffer])
+
+  // Setup keybinding options
+  // ctrl - open nearest table
+  // a - view options for table
 }

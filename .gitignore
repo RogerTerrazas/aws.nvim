@@ -7,8 +7,8 @@ pnpm-debug.log*
 .pnpm-debug.log*
 
 # TypeScript build output
-rplugin/node/nvim-aws/dist/
-rplugin/node/nvim-aws/coverage/
+dist/
+coverage/
 
 # Compiled JavaScript files
 *.js
@@ -17,8 +17,10 @@ rplugin/node/nvim-aws/coverage/
 *.d.ts.map
 
 # BUT keep any committed JS/TS config files
-!rplugin/node/nvim-aws/package.json
-!rplugin/node/nvim-aws/tsconfig.json
+!package.json
+!tsconfig.json
+!vitest.config.ts
+!rplugin/**/*.js
 
 # macOS
 .DS_Store

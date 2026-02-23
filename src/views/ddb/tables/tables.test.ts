@@ -2,18 +2,23 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mockClient } from 'aws-sdk-client-mock'
 import { DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb'
 import { initializeDDBTablesView } from '../tables/tables'
-import type { Neovim } from 'neovim'
+import type { NvimPlugin, Window } from 'neovim'
 
 // Create a mock DynamoDB client
 const ddbMock = mockClient(DynamoDBClient)
 
-// Mock Neovim instance
-function createMockNvim() {
+// Mock Neovim plugin instance
+function createMockPlugin() {
   const mockBuffer = { id: 1 }
-  return {
+  const mockNvim = {
     createBuffer: vi.fn().mockResolvedValue(mockBuffer),
     call: vi.fn().mockResolvedValue(undefined),
-  } as unknown as Neovim
+  }
+
+  return {
+    nvim: mockNvim,
+    registerCommand: vi.fn(),
+  } as unknown as NvimPlugin
 }
 
 describe('initializeDDBTablesView', () => {
@@ -29,15 +34,15 @@ describe('initializeDDBTablesView', () => {
         TableNames: mockTableNames,
       })
 
-      const mockNvim = createMockNvim()
-      const mockWindow = { id: 1 }
+      const mockPlugin = createMockPlugin()
+      const mockWindow = { id: 1 } as unknown as Window
 
       // Act
-      await initializeDDBTablesView(mockNvim, mockWindow)
+      await initializeDDBTablesView(mockPlugin, mockWindow)
 
       // Assert
-      expect(mockNvim.createBuffer).toHaveBeenCalledWith(false, true)
-      expect(mockNvim.call).toHaveBeenCalled()
+      expect(mockPlugin.nvim.createBuffer).toHaveBeenCalledWith(false, true)
+      expect(mockPlugin.nvim.call).toHaveBeenCalled()
     })
   })
 
@@ -47,12 +52,12 @@ describe('initializeDDBTablesView', () => {
       const mockError = new Error('DynamoDB connection failed')
       ddbMock.on(ListTablesCommand).rejects(mockError)
 
-      const mockNvim = createMockNvim()
-      const mockWindow = { id: 1 }
+      const mockPlugin = createMockPlugin()
+      const mockWindow = { id: 1 } as unknown as Window
 
       // Act & Assert
       await expect(
-        initializeDDBTablesView(mockNvim, mockWindow)
+        initializeDDBTablesView(mockPlugin, mockWindow)
       ).rejects.toThrow('DynamoDB connection failed')
     })
   })

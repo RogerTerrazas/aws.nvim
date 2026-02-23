@@ -1,6 +1,7 @@
 import type { NvimPlugin } from 'neovim'
 import { router, viewRegistry } from './router'
 import { ddbTablesViewEntry } from './views/ddb/tables/tables'
+import { ddbTableViewEntry } from './views/ddb/table/table'
 
 // Plugin entry point for Neovim remote plugin
 export default function (plugin: NvimPlugin): void {
@@ -9,6 +10,7 @@ export default function (plugin: NvimPlugin): void {
 
   // Register all views with the view registry
   viewRegistry.register(ddbTablesViewEntry)
+  viewRegistry.register(ddbTableViewEntry)
 
   // Register the unified NvimAws command with arguments
   plugin.registerCommand(

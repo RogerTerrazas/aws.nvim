@@ -12,7 +12,7 @@ export interface WindowState {
 }
 
 // View types
-export type ViewName = 'dynamo_db_tables' | string
+export type ViewName = 'dynamo_db_tables' | 'dynamo_db_table' | string
 
 // View initialization function type
 export type ViewInitializer = (

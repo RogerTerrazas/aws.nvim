@@ -96,17 +96,41 @@ Execute view-specific actions on the current view:
 
 ### Available Views
 
-- `dynamo_db_tables` - Browse DynamoDB tables
+- `dynamo_db_tables` - Browse DynamoDB tables in your AWS account
+- `dynamo_db_table` - View items in a specific DynamoDB table (first 50 items)
 
-### Available Actions (DynamoDB Tables View)
+### Available Actions
 
-- `select` - Select the table on the current line (also mapped to `<C-CR>`)
+#### DynamoDB Tables View
+
+- `select` - Select the table on the current line and navigate to table view (also mapped to `<CR>` and `<C-CR>`)
 - `refresh` - Refresh the tables list (also mapped to `r`)
+
+#### DynamoDB Table View
+
+- `refresh` - Refresh the table items (mapped to `r`)
+- Press `q` to close the table view
+
+### Workflow Example
+
+1. Open DynamoDB tables list:
+
+   ```vim
+   :NvimAws
+   ```
+
+2. Navigate to a table name and press `<CR>` (Enter) to view its contents
+
+3. The table view will display the first 50 items in JSON format
+
+4. Press `q` to close the table view and return
 
 ## Features
 
 - Unified command interface with `route` and `action` subcommands
-- DynamoDB table browsing
-- AWS service integration
+- DynamoDB table browsing and item viewing
+- View first 50 items from any DynamoDB table
+- AWS service integration with automatic credential detection
 - Buffer-based UI for AWS resources
 - Extensible view and action registry system
+- Intuitive keybindings for navigation

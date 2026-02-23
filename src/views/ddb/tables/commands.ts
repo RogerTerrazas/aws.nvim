@@ -1,7 +1,8 @@
 import type { Buffer, NvimPlugin } from 'neovim'
+import { handleRoute } from '../../../router'
 
 /**
- * Action: Select DynamoDB table on current line
+ * Action: Select DynamoDB table on current line and route to table view
  */
 export async function selectDDBTable(plugin: NvimPlugin): Promise<void> {
   const nvim = plugin.nvim
@@ -9,10 +10,8 @@ export async function selectDDBTable(plugin: NvimPlugin): Promise<void> {
     const line = await nvim.line
     const tableName = line.trim()
     if (tableName) {
-      // Show visual feedback using echo (visible in command line)
-      await nvim.command(`echo "Selected DynamoDB table: ${tableName}"`)
-      // Also write to output for logging
-      await nvim.outWrite(`Selected table: ${tableName}\n`)
+      // Route to the table view with the table name as an argument
+      await handleRoute(plugin, 'dynamo_db_table', [tableName])
     } else {
       await nvim.command('echo "No table name on current line"')
     }
@@ -47,7 +46,16 @@ export async function initializeDDBTablesCommands(
 ): Promise<void> {
   const nvim = plugin.nvim
 
-  // Map Ctrl+Enter key to select table action
+  // Map Enter key to select table action
+  await nvim.call('nvim_buf_set_keymap', [
+    buffer,
+    'n',
+    '<CR>',
+    '<cmd>NvimAws action select<CR>',
+    { noremap: true, silent: true, desc: 'Select DynamoDB table' },
+  ])
+
+  // Map Ctrl+Enter key to select table action (alternative)
   await nvim.call('nvim_buf_set_keymap', [
     buffer,
     'n',

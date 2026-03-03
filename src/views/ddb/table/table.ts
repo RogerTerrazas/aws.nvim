@@ -2,6 +2,7 @@ import type { Buffer, NvimPlugin, Window } from 'neovim'
 import { scanDynamoDBTable } from '../../../accessors/ddb/items'
 import { initializeDDBTableCommands } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
+import { VIEW_TO_FILETYPE } from '../../../types'
 
 /**
  * Store the current table name for the view
@@ -66,7 +67,7 @@ export async function initializeDDBTableView(
     await nvim.call('nvim_buf_set_option', [
       buffer,
       'filetype',
-      'nvim-aws-ddb-table',
+      VIEW_TO_FILETYPE['dynamo_db_table'],
     ])
 
     // Set content then make read-only

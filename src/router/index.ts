@@ -1,5 +1,6 @@
 import { NvimPlugin } from 'neovim'
-import type { ViewRegistryEntry, CommandType } from '../types'
+import type { ViewRegistryEntry, CommandType, BufferFiletype } from '../types'
+import { FILETYPE_TO_VIEW } from '../types'
 
 /**
  * Registry for all views and their associated actions
@@ -116,13 +117,8 @@ async function detectCurrentView(nvim: any): Promise<string | null> {
       'filetype',
     ])
 
-    // Map filetype to view name
-    const filetypeToView: Record<string, string> = {
-      'nvim-aws-ddb-tables': 'dynamo_db_tables',
-      'nvim-aws-ddb-table': 'dynamo_db_table',
-    }
-
-    return filetypeToView[filetype] || null
+    // Map filetype to view name using typed mapping
+    return FILETYPE_TO_VIEW[filetype as BufferFiletype] || null
   } catch (error) {
     return null
   }

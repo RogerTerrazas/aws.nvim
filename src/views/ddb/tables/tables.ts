@@ -6,6 +6,7 @@ import {
   refreshDDBTables,
 } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
+import { VIEW_TO_FILETYPE } from '../../../types'
 
 export async function initializeDDBTablesView(
   plugin: NvimPlugin,
@@ -31,7 +32,7 @@ export async function initializeDDBTablesView(
   await nvim.call('nvim_buf_set_option', [
     buffer,
     'filetype',
-    'nvim-aws-ddb-tables',
+    VIEW_TO_FILETYPE['dynamo_db_tables'],
   ])
 
   // Set content then make read-only

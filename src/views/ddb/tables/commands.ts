@@ -40,13 +40,4 @@ export async function initializeDDBTablesCommands(
     '<cmd>NvimAws action select<CR>',
     { noremap: true, silent: true, desc: 'Select DynamoDB table' },
   ])
-
-  // Map Ctrl+Enter key to select table action (alternative)
-  await nvim.call('nvim_buf_set_keymap', [
-    buffer,
-    'n',
-    '<C-CR>',
-    '<cmd>NvimAws action select<CR>',
-    { noremap: true, silent: true, desc: 'Select DynamoDB table' },
-  ])
 }

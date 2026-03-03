@@ -62,7 +62,7 @@ export async function initializeDDBTableView(
 
     // Set buffer options
     await nvim.call('nvim_buf_set_option', [buffer, 'buftype', 'nofile'])
-    await nvim.call('nvim_buf_set_option', [buffer, 'bufhidden', 'wipe'])
+    await nvim.call('nvim_buf_set_option', [buffer, 'bufhidden', 'hide'])
     await nvim.call('nvim_buf_set_option', [
       buffer,
       'filetype',

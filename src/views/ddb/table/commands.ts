@@ -9,13 +9,13 @@ export async function initializeDDBTableCommands(
 ): Promise<void> {
   const nvim = plugin.nvim
 
-  // Map 'q' key to close the tab
+  // Map 'q' key to go back via jump list
   await nvim.call('nvim_buf_set_keymap', [
     buffer,
     'n',
     'q',
-    '<cmd>tabclose<CR>',
-    { noremap: true, silent: true, desc: 'Close table view' },
+    '<C-o>',
+    { noremap: true, silent: true, desc: 'Go back to previous view' },
   ])
 
   // Map 'r' key to refresh action (future implementation)

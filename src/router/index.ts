@@ -92,8 +92,7 @@ export async function handleRoute(
   }
 
   try {
-    // Create new tab for the view
-    await nvim.command('tabnew')
+    // Use the current window
     const window = await nvim.window
 
     // Initialize the view
@@ -107,6 +106,29 @@ export async function handleRoute(
 }
 
 /**
+ * Detect the current view based on buffer filetype
+ */
+async function detectCurrentView(nvim: any): Promise<string | null> {
+  try {
+    const buffer = await nvim.buffer
+    const filetype = await nvim.call('nvim_buf_get_option', [
+      buffer,
+      'filetype',
+    ])
+
+    // Map filetype to view name
+    const filetypeToView: Record<string, string> = {
+      'nvim-aws-ddb-tables': 'dynamo_db_tables',
+      'nvim-aws-ddb-table': 'dynamo_db_table',
+    }
+
+    return filetypeToView[filetype] || null
+  } catch (error) {
+    return null
+  }
+}
+
+/**
  * Handle action command - execute action on current view
  */
 export async function handleAction(
@@ -115,7 +137,9 @@ export async function handleAction(
   args: string[]
 ): Promise<void> {
   const nvim = plugin.nvim
-  const currentView = viewRegistry.getCurrentView()
+
+  // Detect the current view based on buffer filetype
+  const currentView = await detectCurrentView(nvim)
 
   if (!currentView) {
     await nvim.errWrite(

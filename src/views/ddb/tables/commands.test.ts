@@ -36,23 +36,4 @@ describe('initializeDDBTablesCommands', () => {
       }),
     ])
   })
-
-  it('should set up r keymap for refresh action', async () => {
-    const mockPlugin = createMockPlugin()
-    const mockBuffer = createMockBuffer()
-
-    await initializeDDBTablesCommands(mockPlugin, mockBuffer)
-
-    expect(mockPlugin.nvim.call).toHaveBeenCalledWith('nvim_buf_set_keymap', [
-      mockBuffer,
-      'n',
-      'r',
-      '<cmd>NvimAws action refresh<CR>',
-      expect.objectContaining({
-        noremap: true,
-        silent: true,
-        desc: 'Refresh tables list',
-      }),
-    ])
-  })
 })

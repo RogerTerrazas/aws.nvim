@@ -46,6 +46,13 @@ function buildFormLines(tableDesc: TableDescription): string[] {
     lines.push(`#   ${buildIndexLabel(idx)}`)
   }
   lines.push(`#`)
+  lines.push(
+    `# SK operators: = > >= < <=  |  begins_with <val>  |  between <v1> AND <v2>`
+  )
+  lines.push(
+    `# Examples:  "> 1000"   "begins_with ORDER"   "between 10 AND 20"`
+  )
+  lines.push(`# Values may contain spaces: "= my file.pdf"   "between a AND z"`)
   lines.push(`# Press <CR> on any line to execute query. Press q to go back.`)
 
   return lines

@@ -1,16 +1,33 @@
 import type { Buffer, NvimPlugin, Window } from 'neovim'
 import { queryDynamoDBTable } from '../../../accessors/ddb/query'
-import type { QueryParams } from '../../../accessors/ddb/query'
+import type {
+  QueryParams,
+  SkCondition,
+  SkOperator,
+} from '../../../accessors/ddb/query'
 import { initializeDDBQueryResultsCommands } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
 
+function formatSkCondition(condition: SkCondition, skName: string): string {
+  const { operator, value, value2 } = condition
+  if (operator === 'between') {
+    return `${skName} BETWEEN "${value}" AND "${value2 ?? value}"`
+  }
+  if (operator === 'begins_with') {
+    return `begins_with(${skName}, "${value}")`
+  }
+  return `${skName} ${operator} "${value}"`
+}
+
 function buildHeader(params: QueryParams, count: number): string[] {
   const indexPart = params.indexName ? ` (index: ${params.indexName})` : ''
+
   const skPart =
-    params.sortKeyName && params.sortKeyValue
-      ? ` AND ${params.sortKeyName} = "${params.sortKeyValue}"`
+    params.sortKeyName && params.sortKeyCondition
+      ? ` AND ${formatSkCondition(params.sortKeyCondition, params.sortKeyName)}`
       : ''
+
   const query = `${params.partitionKeyName} = "${params.partitionKeyValue}"${skPart}`
 
   return [
@@ -29,7 +46,8 @@ export async function initializeDDBQueryResultsView(
 ): Promise<void> {
   const nvim = plugin.nvim
 
-  // Args: [tableName, indexName, pkName, pkValue, pkType, skName, skValue, skType, limit]
+  // Args: [tableName, indexName, pkName, pkValue, pkType,
+  //        skName, skOperator, skValue, skValue2, skType, limit]
   if (!args || args.length < 5) {
     await nvim.errWrite('Query results view requires query parameters.\n')
     return
@@ -42,10 +60,22 @@ export async function initializeDDBQueryResultsView(
     pkValue,
     pkType,
     skName,
+    skOperator,
     skValue,
+    skValue2,
     skType,
     limitRaw,
   ] = args
+
+  // Reconstruct SkCondition from the serialised args
+  const skCondition: SkCondition | undefined =
+    skName && skOperator && skValue
+      ? {
+          operator: skOperator as SkOperator,
+          value: skValue,
+          ...(skValue2 ? { value2: skValue2 } : {}),
+        }
+      : undefined
 
   const params: QueryParams = {
     tableName: tableName ?? '',
@@ -53,8 +83,12 @@ export async function initializeDDBQueryResultsView(
     partitionKeyName: pkName ?? '',
     partitionKeyValue: pkValue ?? '',
     partitionKeyType: pkType ?? 'S',
-    ...(skName && skValue && skType
-      ? { sortKeyName: skName, sortKeyValue: skValue, sortKeyType: skType }
+    ...(skName && skCondition && skType
+      ? {
+          sortKeyName: skName,
+          sortKeyCondition: skCondition,
+          sortKeyType: skType,
+        }
       : {}),
     limit: parseInt(limitRaw ?? '50', 10) || 50,
   }

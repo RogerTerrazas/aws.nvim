@@ -5,11 +5,74 @@ import type {
   TableDescription,
   TableIndex,
 } from '../../../accessors/ddb/describe-table'
+import type { SkCondition, SkOperator } from '../../../accessors/ddb/query'
+
+/**
+ * Parse the raw SK field value typed by the user into a structured SkCondition.
+ *
+ * Supported syntax (case-insensitive for keyword operators):
+ *   bare value                   → = value          (spaces in value are fine)
+ *   = value                      → = value
+ *   < value                      → < value
+ *   <= value                     → <= value
+ *   > value                      → > value
+ *   >= value                     → >= value
+ *   begins_with value            → begins_with value (spaces in value are fine)
+ *   between value1 AND value2    → BETWEEN value1 AND value2
+ *                                  (each bound may contain spaces; the literal
+ *                                  " AND " — case-insensitive — is the separator)
+ *
+ * Returns null when the raw input is empty (no SK condition).
+ */
+export function parseSkInput(raw: string): SkCondition | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+
+  const lower = trimmed.toLowerCase()
+
+  // begins_with <value>  — everything after the keyword is the value
+  if (lower.startsWith('begins_with ')) {
+    const value = trimmed.slice('begins_with '.length).trim()
+    return { operator: 'begins_with', value }
+  }
+
+  // between <value1> AND <value2>
+  // The separator is the literal " AND " (case-insensitive) so both bounds
+  // may freely contain spaces (e.g. "between foo bar AND baz qux").
+  if (lower.startsWith('between ')) {
+    const rest = trimmed.slice('between '.length)
+    const andIdx = rest.search(/ and /i)
+    if (andIdx !== -1) {
+      const value = rest.slice(0, andIdx).trim()
+      const value2 = rest.slice(andIdx + ' and '.length).trim()
+      return { operator: 'between', value, value2 }
+    }
+    // No " AND " separator — treat the whole remainder as both bounds
+    return { operator: 'between', value: rest.trim(), value2: rest.trim() }
+  }
+
+  // Two-char symbol operators first (must precede single-char checks)
+  for (const op of ['<=', '>='] as SkOperator[]) {
+    if (trimmed.startsWith(op)) {
+      const value = trimmed.slice(op.length).trim()
+      return { operator: op, value }
+    }
+  }
+
+  // Single-char symbol operators — everything after the symbol is the value
+  for (const op of ['<', '>', '='] as SkOperator[]) {
+    if (trimmed.startsWith(op)) {
+      const value = trimmed.slice(op.length).trim()
+      return { operator: op, value }
+    }
+  }
+
+  // Bare value — default to equals
+  return { operator: '=', value: trimmed }
+}
 
 /**
  * Parse a form line of the shape "Label (detail): value" and return the value.
- * Falls back to splitting on the first ": " if the parenthesised label pattern
- * is not present.
  */
 function parseFieldValue(line: string): string {
   const colonIdx = line.indexOf(': ')
@@ -19,7 +82,7 @@ function parseFieldValue(line: string): string {
 
 /**
  * Given a table description and the index name the user entered, resolve the
- * key schema for that index (partition key name/type and optional sort key).
+ * key schema for that index.
  */
 function resolveIndexSchema(
   tableDesc: TableDescription,
@@ -78,7 +141,6 @@ export async function submitDDBQuery(plugin: NvimPlugin): Promise<void> {
   }
 
   try {
-    // Read all non-comment lines from the buffer
     const buffer = await nvim.buffer
     const allLines: string[] = await nvim.call('nvim_buf_get_lines', [
       buffer,
@@ -96,7 +158,7 @@ export async function submitDDBQuery(plugin: NvimPlugin): Promise<void> {
     const tableName = getValue('Table:')
     const indexValue = getValue('Index:')
     const pkValue = getValue('PK')
-    const skValue = getValue('SK')
+    const skRaw = getValue('SK')
     const limitRaw = getValue('Limit:')
     const limit = parseInt(limitRaw, 10) || 50
 
@@ -110,13 +172,16 @@ export async function submitDDBQuery(plugin: NvimPlugin): Promise<void> {
       indexValue
     )
 
+    const skCondition = parseSkInput(skRaw)
+
     const normalizedIndex =
       indexValue.trim().toLowerCase() === '(primary)' ||
       indexValue.trim() === ''
         ? ''
         : indexValue.trim()
 
-    // Pass all params as positional args — empty string means "not provided"
+    // Args: [tableName, indexName, pkName, pkValue, pkType,
+    //        skName, skOperator, skValue, skValue2, skType, limit]
     await handleRoute(plugin, 'dynamo_db_query_results', [
       tableName,
       normalizedIndex,
@@ -124,7 +189,9 @@ export async function submitDDBQuery(plugin: NvimPlugin): Promise<void> {
       pkValue,
       pkType,
       skName ?? '',
-      skValue,
+      skCondition?.operator ?? '',
+      skCondition?.value ?? '',
+      skCondition?.value2 ?? '',
       skType ?? '',
       String(limit),
     ])

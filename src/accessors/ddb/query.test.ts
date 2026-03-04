@@ -5,6 +5,14 @@ import { queryDynamoDBTable } from './query'
 
 const ddbMock = mockClient(DynamoDBClient)
 
+const baseParams = {
+  tableName: 'orders-table',
+  partitionKeyName: 'userId',
+  partitionKeyValue: 'user-1',
+  partitionKeyType: 'S',
+  limit: 10,
+} as const
+
 describe('queryDynamoDBTable', () => {
   beforeEach(() => {
     ddbMock.reset()
@@ -31,27 +39,122 @@ describe('queryDynamoDBTable', () => {
       expect(result[0]).toEqual({ userId: 'user-1', name: 'Alice' })
     })
 
-    it('should include SK condition when sort key params are provided', async () => {
+    it('should generate #sk = :sk for equals SK condition', async () => {
       ddbMock.on(QueryCommand).resolves({ Items: [] })
 
       await queryDynamoDBTable({
-        tableName: 'orders-table',
-        partitionKeyName: 'userId',
-        partitionKeyValue: 'user-1',
-        partitionKeyType: 'S',
+        ...baseParams,
         sortKeyName: 'timestamp',
-        sortKeyValue: '1234567890',
+        sortKeyCondition: { operator: '=', value: '1000' },
         sortKeyType: 'N',
-        limit: 10,
       })
 
       expect(
         ddbMock.commandCalls(QueryCommand)[0]?.args[0].input
       ).toMatchObject({
-        TableName: 'orders-table',
         KeyConditionExpression: '#pk = :pk AND #sk = :sk',
         ExpressionAttributeNames: { '#pk': 'userId', '#sk': 'timestamp' },
-        Limit: 10,
+      })
+    })
+
+    it('should generate #sk < :sk for less-than SK condition', async () => {
+      ddbMock.on(QueryCommand).resolves({ Items: [] })
+
+      await queryDynamoDBTable({
+        ...baseParams,
+        sortKeyName: 'timestamp',
+        sortKeyCondition: { operator: '<', value: '2000' },
+        sortKeyType: 'N',
+      })
+
+      expect(
+        ddbMock.commandCalls(QueryCommand)[0]?.args[0].input
+          .KeyConditionExpression
+      ).toBe('#pk = :pk AND #sk < :sk')
+    })
+
+    it('should generate #sk <= :sk for less-than-or-equal SK condition', async () => {
+      ddbMock.on(QueryCommand).resolves({ Items: [] })
+
+      await queryDynamoDBTable({
+        ...baseParams,
+        sortKeyName: 'timestamp',
+        sortKeyCondition: { operator: '<=', value: '2000' },
+        sortKeyType: 'N',
+      })
+
+      expect(
+        ddbMock.commandCalls(QueryCommand)[0]?.args[0].input
+          .KeyConditionExpression
+      ).toBe('#pk = :pk AND #sk <= :sk')
+    })
+
+    it('should generate #sk > :sk for greater-than SK condition', async () => {
+      ddbMock.on(QueryCommand).resolves({ Items: [] })
+
+      await queryDynamoDBTable({
+        ...baseParams,
+        sortKeyName: 'timestamp',
+        sortKeyCondition: { operator: '>', value: '500' },
+        sortKeyType: 'N',
+      })
+
+      expect(
+        ddbMock.commandCalls(QueryCommand)[0]?.args[0].input
+          .KeyConditionExpression
+      ).toBe('#pk = :pk AND #sk > :sk')
+    })
+
+    it('should generate #sk >= :sk for greater-than-or-equal SK condition', async () => {
+      ddbMock.on(QueryCommand).resolves({ Items: [] })
+
+      await queryDynamoDBTable({
+        ...baseParams,
+        sortKeyName: 'timestamp',
+        sortKeyCondition: { operator: '>=', value: '500' },
+        sortKeyType: 'N',
+      })
+
+      expect(
+        ddbMock.commandCalls(QueryCommand)[0]?.args[0].input
+          .KeyConditionExpression
+      ).toBe('#pk = :pk AND #sk >= :sk')
+    })
+
+    it('should generate begins_with(#sk, :sk) for begins_with SK condition', async () => {
+      ddbMock.on(QueryCommand).resolves({ Items: [] })
+
+      await queryDynamoDBTable({
+        ...baseParams,
+        sortKeyName: 'orderId',
+        sortKeyCondition: { operator: 'begins_with', value: 'ORDER#' },
+        sortKeyType: 'S',
+      })
+
+      expect(
+        ddbMock.commandCalls(QueryCommand)[0]?.args[0].input
+          .KeyConditionExpression
+      ).toBe('#pk = :pk AND begins_with(#sk, :sk)')
+    })
+
+    it('should generate BETWEEN expression with :sk1 and :sk2 for between SK condition', async () => {
+      ddbMock.on(QueryCommand).resolves({ Items: [] })
+
+      await queryDynamoDBTable({
+        ...baseParams,
+        sortKeyName: 'score',
+        sortKeyCondition: { operator: 'between', value: '10', value2: '20' },
+        sortKeyType: 'N',
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const input = ddbMock.commandCalls(QueryCommand)[0]!.args[0].input
+      expect(input.KeyConditionExpression).toBe(
+        '#pk = :pk AND #sk BETWEEN :sk1 AND :sk2'
+      )
+      expect(input.ExpressionAttributeValues).toMatchObject({
+        ':sk1': { N: '10' },
+        ':sk2': { N: '20' },
       })
     })
 
@@ -69,9 +172,7 @@ describe('queryDynamoDBTable', () => {
 
       expect(
         ddbMock.commandCalls(QueryCommand)[0]?.args[0].input
-      ).toMatchObject({
-        IndexName: 'category-index',
-      })
+      ).toMatchObject({ IndexName: 'category-index' })
     })
 
     it('should return empty array when no items found', async () => {

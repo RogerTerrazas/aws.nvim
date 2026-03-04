@@ -3,6 +3,21 @@ import type { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { unmarshall } from '@aws-sdk/util-dynamodb'
 import type { DynamoDBItem } from './items'
 
+export type SkOperator =
+  | '='
+  | '<'
+  | '<='
+  | '>'
+  | '>='
+  | 'begins_with'
+  | 'between'
+
+export interface SkCondition {
+  operator: SkOperator
+  value: string
+  value2?: string // only used for 'between'
+}
+
 export interface QueryParams {
   tableName: string
   indexName?: string
@@ -10,7 +25,7 @@ export interface QueryParams {
   partitionKeyValue: string
   partitionKeyType: string // S | N | B
   sortKeyName?: string
-  sortKeyValue?: string
+  sortKeyCondition?: SkCondition
   sortKeyType?: string // S | N | B
   limit: number
 }
@@ -35,13 +50,24 @@ export async function queryDynamoDBTable(
 
   let keyConditionExpression = '#pk = :pk'
 
-  if (params.sortKeyName && params.sortKeyValue && params.sortKeyType) {
-    expressionNames['#sk'] = params.sortKeyName
-    expressionValues[':sk'] = marshalValue(
-      params.sortKeyValue,
-      params.sortKeyType
-    )
-    keyConditionExpression += ' AND #sk = :sk'
+  const { sortKeyName, sortKeyCondition, sortKeyType } = params
+
+  if (sortKeyName && sortKeyCondition && sortKeyType) {
+    expressionNames['#sk'] = sortKeyName
+    const { operator, value, value2 } = sortKeyCondition
+
+    if (operator === 'between') {
+      expressionValues[':sk1'] = marshalValue(value, sortKeyType)
+      expressionValues[':sk2'] = marshalValue(value2 ?? value, sortKeyType)
+      keyConditionExpression += ' AND #sk BETWEEN :sk1 AND :sk2'
+    } else if (operator === 'begins_with') {
+      expressionValues[':sk'] = marshalValue(value, sortKeyType)
+      keyConditionExpression += ' AND begins_with(#sk, :sk)'
+    } else {
+      // =, <, <=, >, >=
+      expressionValues[':sk'] = marshalValue(value, sortKeyType)
+      keyConditionExpression += ` AND #sk ${operator} :sk`
+    }
   }
 
   const command = new QueryCommand({

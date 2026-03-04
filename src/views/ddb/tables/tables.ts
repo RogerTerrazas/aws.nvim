@@ -1,6 +1,10 @@
 import type { Buffer, NvimPlugin, Window } from 'neovim'
 import { listDynamoDBTables } from '../../../accessors/ddb/tables'
-import { initializeDDBTablesCommands, selectDDBTable } from './commands'
+import {
+  initializeDDBTablesCommands,
+  selectDDBTable,
+  queryDDBTable,
+} from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
 
@@ -50,5 +54,6 @@ export const ddbTablesViewEntry: ViewRegistryEntry = {
   initialize: initializeDDBTablesView,
   actions: {
     select: selectDDBTable,
+    query: queryDDBTable,
   },
 }

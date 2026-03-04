@@ -18,7 +18,7 @@ function createMockBuffer() {
 }
 
 describe('initializeDDBTablesCommands', () => {
-  it('should set up Ctrl+Enter keymap for select action', async () => {
+  it('should set up Enter keymap for select action', async () => {
     const mockPlugin = createMockPlugin()
     const mockBuffer = createMockBuffer()
 
@@ -27,12 +27,31 @@ describe('initializeDDBTablesCommands', () => {
     expect(mockPlugin.nvim.call).toHaveBeenCalledWith('nvim_buf_set_keymap', [
       mockBuffer,
       'n',
-      '<C-CR>',
+      '<CR>',
       '<cmd>NvimAws action select<CR>',
       expect.objectContaining({
         noremap: true,
         silent: true,
         desc: 'Select DynamoDB table',
+      }),
+    ])
+  })
+
+  it('should set up q keymap for query action', async () => {
+    const mockPlugin = createMockPlugin()
+    const mockBuffer = createMockBuffer()
+
+    await initializeDDBTablesCommands(mockPlugin, mockBuffer)
+
+    expect(mockPlugin.nvim.call).toHaveBeenCalledWith('nvim_buf_set_keymap', [
+      mockBuffer,
+      'n',
+      'q',
+      '<cmd>NvimAws action query<CR>',
+      expect.objectContaining({
+        noremap: true,
+        silent: true,
+        desc: 'Query DynamoDB table',
       }),
     ])
   })

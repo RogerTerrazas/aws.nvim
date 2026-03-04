@@ -24,6 +24,24 @@ export async function selectDDBTable(plugin: NvimPlugin): Promise<void> {
 }
 
 /**
+ * Action: Open query form for the DynamoDB table on the current line
+ */
+export async function queryDDBTable(plugin: NvimPlugin): Promise<void> {
+  const nvim = plugin.nvim
+  try {
+    const line = await nvim.line
+    const tableName = line.trim()
+    if (tableName) {
+      await handleRoute(plugin, 'dynamo_db_query', [tableName])
+    } else {
+      await nvim.command('echo "No table name on current line"')
+    }
+  } catch (error) {
+    await nvim.errWrite(`Error opening query view: ${String(error)}\n`)
+  }
+}
+
+/**
  * Initialize keybindings for DDB tables view
  */
 export async function initializeDDBTablesCommands(
@@ -39,5 +57,14 @@ export async function initializeDDBTablesCommands(
     '<CR>',
     '<cmd>NvimAws action select<CR>',
     { noremap: true, silent: true, desc: 'Select DynamoDB table' },
+  ])
+
+  // Map q to open query form for the table on the current line
+  await nvim.call('nvim_buf_set_keymap', [
+    buffer,
+    'n',
+    'q',
+    '<cmd>NvimAws action query<CR>',
+    { noremap: true, silent: true, desc: 'Query DynamoDB table' },
   ])
 }

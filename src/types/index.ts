@@ -12,21 +12,33 @@ export interface WindowState {
 }
 
 // View types
-export type ViewName = 'dynamo_db_tables' | 'dynamo_db_table'
+export type ViewName =
+  | 'dynamo_db_tables'
+  | 'dynamo_db_table'
+  | 'dynamo_db_query'
+  | 'dynamo_db_query_results'
 
 // Filetype definitions for buffer filetypes
-export type BufferFiletype = 'nvim-aws-ddb-tables' | 'nvim-aws-ddb-table'
+export type BufferFiletype =
+  | 'nvim-aws-ddb-tables'
+  | 'nvim-aws-ddb-table'
+  | 'nvim-aws-ddb-query'
+  | 'nvim-aws-ddb-query-results'
 
 // Filetype to view name mapping
 export const FILETYPE_TO_VIEW: Record<BufferFiletype, ViewName> = {
   'nvim-aws-ddb-tables': 'dynamo_db_tables',
   'nvim-aws-ddb-table': 'dynamo_db_table',
+  'nvim-aws-ddb-query': 'dynamo_db_query',
+  'nvim-aws-ddb-query-results': 'dynamo_db_query_results',
 } as const
 
 // View name to filetype mapping (reverse lookup)
 export const VIEW_TO_FILETYPE: Record<ViewName, BufferFiletype> = {
   dynamo_db_tables: 'nvim-aws-ddb-tables',
   dynamo_db_table: 'nvim-aws-ddb-table',
+  dynamo_db_query: 'nvim-aws-ddb-query',
+  dynamo_db_query_results: 'nvim-aws-ddb-query-results',
 } as const
 
 // View initialization function type

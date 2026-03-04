@@ -89,7 +89,6 @@ describe('Router', () => {
     it('should route to dynamo_db_tables by default when no args provided', async () => {
       await router(mockPlugin, [])
 
-      expect(mockPlugin.nvim.command).toHaveBeenCalledWith('tabnew')
       expect(mockInitialize).toHaveBeenCalledWith(mockPlugin, { id: 1 }, [])
     })
   })

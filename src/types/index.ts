@@ -19,6 +19,8 @@ export type ViewName =
   | 'dynamo_db_table'
   | 'dynamo_db_query'
   | 'dynamo_db_query_results'
+  | 'cloudwatch_query'
+  | 'cloudwatch_query_results'
 
 // Filetype definitions for buffer filetypes
 export type BufferFiletype =
@@ -28,6 +30,8 @@ export type BufferFiletype =
   | 'nvim-aws-ddb-table'
   | 'nvim-aws-ddb-query'
   | 'nvim-aws-ddb-query-results'
+  | 'nvim-aws-cw-query'
+  | 'nvim-aws-cw-query-results'
 
 // Filetype to view name mapping
 export const FILETYPE_TO_VIEW: Record<BufferFiletype, ViewName> = {
@@ -37,6 +41,8 @@ export const FILETYPE_TO_VIEW: Record<BufferFiletype, ViewName> = {
   'nvim-aws-ddb-table': 'dynamo_db_table',
   'nvim-aws-ddb-query': 'dynamo_db_query',
   'nvim-aws-ddb-query-results': 'dynamo_db_query_results',
+  'nvim-aws-cw-query': 'cloudwatch_query',
+  'nvim-aws-cw-query-results': 'cloudwatch_query_results',
 } as const
 
 // View name to filetype mapping (reverse lookup)
@@ -47,6 +53,8 @@ export const VIEW_TO_FILETYPE: Record<ViewName, BufferFiletype> = {
   dynamo_db_table: 'nvim-aws-ddb-table',
   dynamo_db_query: 'nvim-aws-ddb-query',
   dynamo_db_query_results: 'nvim-aws-ddb-query-results',
+  cloudwatch_query: 'nvim-aws-cw-query',
+  cloudwatch_query_results: 'nvim-aws-cw-query-results',
 } as const
 
 // View initialization function type

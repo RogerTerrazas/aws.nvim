@@ -1,4 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { CloudWatchLogsClient } from '@aws-sdk/client-cloudwatch-logs'
 import { fromIni } from '@aws-sdk/credential-providers'
 import type { AwsProfile } from '../accessors/config/profiles'
 
@@ -51,6 +52,24 @@ export function createDynamoDBClient(): DynamoDBClient {
   }
 
   return new DynamoDBClient({})
+}
+
+/**
+ * Create a CloudWatchLogsClient configured for the active profile.
+ *
+ * - If a profile is set, uses fromIni() with that profile name and the
+ *   profile's region (if available).
+ * - If no profile is set, returns a client using the default credential chain.
+ */
+export function createCloudWatchLogsClient(): CloudWatchLogsClient {
+  if (activeProfile) {
+    return new CloudWatchLogsClient({
+      credentials: fromIni({ profile: activeProfile.name }),
+      ...(activeProfile.region ? { region: activeProfile.region } : {}),
+    })
+  }
+
+  return new CloudWatchLogsClient({})
 }
 
 // ---------------------------------------------------------------------------

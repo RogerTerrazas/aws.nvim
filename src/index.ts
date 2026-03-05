@@ -6,6 +6,8 @@ import { ddbTablesViewEntry } from './views/ddb/tables/tables'
 import { ddbTableViewEntry } from './views/ddb/table/table'
 import { ddbQueryViewEntry } from './views/ddb/query/query'
 import { ddbQueryResultsViewEntry } from './views/ddb/query-results/query-results'
+import { cwQueryViewEntry } from './views/cloudwatch/query/query'
+import { cwQueryResultsViewEntry } from './views/cloudwatch/query-results/query-results'
 
 // Plugin entry point for Neovim remote plugin
 export default function (plugin: NvimPlugin): void {
@@ -19,6 +21,8 @@ export default function (plugin: NvimPlugin): void {
   viewRegistry.register(ddbTableViewEntry)
   viewRegistry.register(ddbQueryViewEntry)
   viewRegistry.register(ddbQueryResultsViewEntry)
+  viewRegistry.register(cwQueryViewEntry)
+  viewRegistry.register(cwQueryResultsViewEntry)
 
   // Register the unified NvimAws command with arguments
   plugin.registerCommand(

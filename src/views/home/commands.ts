@@ -3,7 +3,11 @@ import { handleRoute } from '../../router'
 
 // Each menu entry maps a line index (0-based) to a target view name.
 // The order here must match the order in which entries are rendered in home.ts.
-const MENU_ENTRIES: string[] = ['dynamo_db_tables', 'aws_accounts']
+const MENU_ENTRIES: string[] = [
+  'dynamo_db_tables',
+  'cloudwatch_query',
+  'aws_accounts',
+]
 
 /**
  * Parse the target view from the current cursor line.
@@ -64,6 +68,14 @@ export async function initializeHomeCommands(
     'd',
     '<cmd>NvimAws route dynamo_db_tables<CR>',
     { noremap: true, silent: true, desc: 'Go to DynamoDB tables' },
+  ])
+
+  await nvim.call('nvim_buf_set_keymap', [
+    buffer,
+    'n',
+    'c',
+    '<cmd>NvimAws route cloudwatch_query<CR>',
+    { noremap: true, silent: true, desc: 'Go to CloudWatch Logs Insights' },
   ])
 
   await nvim.call('nvim_buf_set_keymap', [

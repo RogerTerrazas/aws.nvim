@@ -27,6 +27,11 @@ const MENU_ITEMS: MenuItem[] = [
     description: 'Browse and query DynamoDB tables',
   },
   {
+    key: 'c',
+    label: 'CloudWatch Logs Insights',
+    description: 'Query CloudWatch log groups with Logs Insights',
+  },
+  {
     key: 'a',
     label: 'AWS Accounts',
     description: 'Switch the active AWS profile',

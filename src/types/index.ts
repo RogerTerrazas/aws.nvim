@@ -13,6 +13,7 @@ export interface WindowState {
 
 // View types
 export type ViewName =
+  | 'aws_home'
   | 'aws_accounts'
   | 'dynamo_db_tables'
   | 'dynamo_db_table'
@@ -21,6 +22,7 @@ export type ViewName =
 
 // Filetype definitions for buffer filetypes
 export type BufferFiletype =
+  | 'nvim-aws-home'
   | 'nvim-aws-accounts'
   | 'nvim-aws-ddb-tables'
   | 'nvim-aws-ddb-table'
@@ -29,6 +31,7 @@ export type BufferFiletype =
 
 // Filetype to view name mapping
 export const FILETYPE_TO_VIEW: Record<BufferFiletype, ViewName> = {
+  'nvim-aws-home': 'aws_home',
   'nvim-aws-accounts': 'aws_accounts',
   'nvim-aws-ddb-tables': 'dynamo_db_tables',
   'nvim-aws-ddb-table': 'dynamo_db_table',
@@ -38,6 +41,7 @@ export const FILETYPE_TO_VIEW: Record<BufferFiletype, ViewName> = {
 
 // View name to filetype mapping (reverse lookup)
 export const VIEW_TO_FILETYPE: Record<ViewName, BufferFiletype> = {
+  aws_home: 'nvim-aws-home',
   aws_accounts: 'nvim-aws-accounts',
   dynamo_db_tables: 'nvim-aws-ddb-tables',
   dynamo_db_table: 'nvim-aws-ddb-table',

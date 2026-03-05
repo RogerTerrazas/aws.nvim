@@ -77,16 +77,16 @@ describe('Router', () => {
         nvim: mockNvim,
       } as unknown as NvimPlugin
 
-      // Register a test view
+      // Register a test view for the default landing target
       const testView: ViewRegistryEntry = {
-        name: 'dynamo_db_tables',
+        name: 'aws_home',
         initialize: mockInitialize as any,
         actions: {},
       }
       viewRegistry.register(testView)
     })
 
-    it('should route to dynamo_db_tables by default when no args provided', async () => {
+    it('should route to aws_home by default when no args provided', async () => {
       await router(mockPlugin, [])
 
       expect(mockInitialize).toHaveBeenCalledWith(mockPlugin, { id: 1 }, [])

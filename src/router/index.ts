@@ -177,9 +177,9 @@ export async function router(
 ): Promise<void> {
   const nvim = plugin.nvim
 
-  // Default to routing to dynamo_db_tables if no args provided
+  // Default to routing to the home/landing view if no args provided
   if (args.length === 0) {
-    await handleRoute(plugin, 'dynamo_db_tables', [])
+    await handleRoute(plugin, 'aws_home', [])
     return
   }
 
@@ -189,7 +189,7 @@ export async function router(
     await nvim.errWrite(
       'Usage: NvimAws <route|action> <target> [args...]\n' +
         'Examples:\n' +
-        '  NvimAws                         (defaults to DynamoDB tables)\n' +
+        '  NvimAws                         (opens home/landing view)\n' +
         '  NvimAws route dynamo_db_tables\n' +
         '  NvimAws action select\n'
     )

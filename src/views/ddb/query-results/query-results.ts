@@ -11,6 +11,7 @@ import type { DynamoDBItem, FilterParams } from '../../../accessors/ddb/items'
 import { initializeDDBQueryResultsCommands } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
+import { getBufferTitle } from '../../../session/index'
 
 // ---------------------------------------------------------------------------
 // Header builders
@@ -212,6 +213,14 @@ export async function initializeDDBQueryResultsView(
 
     await nvim.call('nvim_buf_set_lines', [buffer, 0, -1, false, lines])
     await nvim.call('nvim_buf_set_option', [buffer, 'modifiable', false])
+
+    // Set buffer name with profile context
+    const resultLabel =
+      mode === 'scan'
+        ? `DynamoDB Scan: ${tableName ?? ''}`
+        : `DynamoDB Query: ${tableName ?? ''}`
+    const bufferTitle = getBufferTitle(resultLabel)
+    await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
     await nvim.call('nvim_win_set_buf', [window.id, buffer])
 

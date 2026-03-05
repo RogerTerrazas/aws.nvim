@@ -3,6 +3,7 @@ import { scanDynamoDBTable } from '../../../accessors/ddb/items'
 import { initializeDDBTableCommands } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
+import { getBufferTitle } from '../../../session/index'
 
 /**
  * Store the current table name for the view
@@ -73,6 +74,10 @@ export async function initializeDDBTableView(
     // Set content then make read-only
     await nvim.call('nvim_buf_set_lines', [buffer, 0, -1, false, lines])
     await nvim.call('nvim_buf_set_option', [buffer, 'modifiable', false])
+
+    // Set buffer name with profile context
+    const bufferTitle = getBufferTitle(`DynamoDB Table: ${tableName}`)
+    await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
     // Set the buffer to the window
     await nvim.call('nvim_win_set_buf', [window.id, buffer])

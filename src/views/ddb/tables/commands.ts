@@ -2,6 +2,13 @@ import type { Buffer, NvimPlugin } from 'neovim'
 import { handleRoute } from '../../../router'
 
 /**
+ * Action: Open the AWS account/profile switcher view.
+ */
+export async function openAccountSwitcher(plugin: NvimPlugin): Promise<void> {
+  await handleRoute(plugin, 'aws_accounts', [])
+}
+
+/**
  * Action: Select DynamoDB table on current line and route to table view
  */
 export async function selectDDBTable(plugin: NvimPlugin): Promise<void> {
@@ -66,5 +73,14 @@ export async function initializeDDBTablesCommands(
     'q',
     '<cmd>NvimAws action query<CR>',
     { noremap: true, silent: true, desc: 'Query DynamoDB table' },
+  ])
+
+  // Map a to open the AWS profile switcher
+  await nvim.call('nvim_buf_set_keymap', [
+    buffer,
+    'n',
+    'a',
+    '<cmd>NvimAws action accounts<CR>',
+    { noremap: true, silent: true, desc: 'Switch AWS profile' },
   ])
 }

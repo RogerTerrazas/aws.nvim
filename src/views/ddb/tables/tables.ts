@@ -4,9 +4,11 @@ import {
   initializeDDBTablesCommands,
   selectDDBTable,
   queryDDBTable,
+  openAccountSwitcher,
 } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
+import { getBufferTitle } from '../../../session/index'
 
 export async function initializeDDBTablesView(
   plugin: NvimPlugin,
@@ -39,6 +41,10 @@ export async function initializeDDBTablesView(
   await nvim.call('nvim_buf_set_lines', [buffer, 0, -1, false, lines])
   await nvim.call('nvim_buf_set_option', [buffer, 'modifiable', false])
 
+  // Set buffer name with profile context
+  const bufferTitle = getBufferTitle('DynamoDB Tables')
+  await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
+
   // Set the buffer to the window
   await nvim.call('nvim_win_set_buf', [window.id, buffer])
 
@@ -55,5 +61,6 @@ export const ddbTablesViewEntry: ViewRegistryEntry = {
   actions: {
     select: selectDDBTable,
     query: queryDDBTable,
+    accounts: openAccountSwitcher,
   },
 }

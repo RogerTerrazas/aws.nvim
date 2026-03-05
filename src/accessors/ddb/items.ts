@@ -1,6 +1,7 @@
-import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb'
+import { ScanCommand } from '@aws-sdk/client-dynamodb'
 import type { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { unmarshall } from '@aws-sdk/util-dynamodb'
+import { createDynamoDBClient } from '../../session/index'
 
 export interface DynamoDBItem {
   [key: string]: any
@@ -25,7 +26,7 @@ export async function scanDynamoDBTable(
   limit: number = 50,
   filter?: FilterParams
 ): Promise<DynamoDBItem[]> {
-  const client = new DynamoDBClient({})
+  const client = createDynamoDBClient()
 
   const command = new ScanCommand({
     TableName: tableName,

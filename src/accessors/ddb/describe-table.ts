@@ -1,8 +1,9 @@
-import { DynamoDBClient, DescribeTableCommand } from '@aws-sdk/client-dynamodb'
+import { DescribeTableCommand } from '@aws-sdk/client-dynamodb'
 import type {
   KeySchemaElement,
   AttributeDefinition,
 } from '@aws-sdk/client-dynamodb'
+import { createDynamoDBClient } from '../../session/index'
 
 export interface TableKeyAttr {
   name: string
@@ -55,7 +56,7 @@ function resolveKeySchema(
 export async function describeTable(
   tableName: string
 ): Promise<TableDescription> {
-  const client = new DynamoDBClient({})
+  const client = createDynamoDBClient()
   const command = new DescribeTableCommand({ TableName: tableName })
   const response = await client.send(command)
 

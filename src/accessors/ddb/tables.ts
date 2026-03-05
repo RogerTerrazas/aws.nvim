@@ -1,8 +1,8 @@
-import { DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb'
+import { ListTablesCommand } from '@aws-sdk/client-dynamodb'
+import { createDynamoDBClient } from '../../session/index'
 
 export async function listDynamoDBTables(): Promise<string[] | undefined> {
-  const config = {} // type is DynamoDBClientConfig
-  const client = new DynamoDBClient(config)
+  const client = createDynamoDBClient()
   const command = new ListTablesCommand()
   const response = await client.send(command)
 

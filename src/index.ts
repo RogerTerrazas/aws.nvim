@@ -1,5 +1,6 @@
 import type { NvimPlugin } from 'neovim'
 import { router, viewRegistry } from './router'
+import { accountsViewEntry } from './views/accounts/accounts'
 import { ddbTablesViewEntry } from './views/ddb/tables/tables'
 import { ddbTableViewEntry } from './views/ddb/table/table'
 import { ddbQueryViewEntry } from './views/ddb/query/query'
@@ -11,6 +12,7 @@ export default function (plugin: NvimPlugin): void {
   plugin.setOptions({ dev: false })
 
   // Register all views with the view registry
+  viewRegistry.register(accountsViewEntry)
   viewRegistry.register(ddbTablesViewEntry)
   viewRegistry.register(ddbTableViewEntry)
   viewRegistry.register(ddbQueryViewEntry)

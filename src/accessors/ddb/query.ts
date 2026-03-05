@@ -1,6 +1,7 @@
-import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'
+import { QueryCommand } from '@aws-sdk/client-dynamodb'
 import type { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { unmarshall } from '@aws-sdk/util-dynamodb'
+import { createDynamoDBClient } from '../../session/index'
 import type { DynamoDBItem, FilterParams } from './items'
 
 export type SkOperator =
@@ -40,7 +41,7 @@ function marshalValue(value: string, type: string): AttributeValue {
 export async function queryDynamoDBTable(
   params: QueryParams
 ): Promise<DynamoDBItem[]> {
-  const client = new DynamoDBClient({})
+  const client = createDynamoDBClient()
 
   const expressionNames: Record<string, string> = {
     '#pk': params.partitionKeyName,

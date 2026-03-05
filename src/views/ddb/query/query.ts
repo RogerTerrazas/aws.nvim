@@ -7,6 +7,7 @@ import type {
 import { initializeDDBQueryCommands, submitDDBQuery } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
+import { getBufferTitle } from '../../../session/index'
 
 // Module-level state: current table description used by submit action
 let currentTableDescription: TableDescription | null = null
@@ -99,6 +100,10 @@ export async function initializeDDBQueryView(
 
     // Set content — leave modifiable so user can edit field values
     await nvim.call('nvim_buf_set_lines', [buffer, 0, -1, false, lines])
+
+    // Set buffer name with profile context
+    const bufferTitle = getBufferTitle(`DynamoDB Query: ${tableName}`)
+    await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
     await nvim.call('nvim_win_set_buf', [window.id, buffer])
 

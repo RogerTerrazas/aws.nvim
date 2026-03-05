@@ -188,6 +188,28 @@ describe('queryDynamoDBTable', () => {
 
       expect(result).toEqual([])
     })
+
+    it('should merge filter into QueryCommand when filter is provided', async () => {
+      ddbMock.on(QueryCommand).resolves({ Items: [] })
+
+      await queryDynamoDBTable({
+        ...baseParams,
+        filter: {
+          expression: '#f = :f',
+          attributeNames: { '#f': 'status' },
+          attributeValues: { ':f': { S: 'ACTIVE' } },
+        },
+      })
+
+      const input = ddbMock.commandCalls(QueryCommand)[0]?.args[0].input
+      expect(input).toMatchObject({
+        FilterExpression: '#f = :f',
+        ExpressionAttributeNames: { '#pk': 'userId', '#f': 'status' },
+        ExpressionAttributeValues: expect.objectContaining({
+          ':f': { S: 'ACTIVE' },
+        }),
+      })
+    })
   })
 
   describe('FAILURE cases', () => {

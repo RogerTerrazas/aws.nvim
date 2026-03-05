@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseSkInput } from './commands'
+import { parseSkInput, parseFilterInput, inferValueType } from './commands'
 
 describe('parseSkInput', () => {
   describe('empty / no-op input', () => {
@@ -171,6 +171,137 @@ describe('parseSkInput', () => {
       expect(parseSkInput('begins_with 9.05.25 Crushed')).toEqual({
         operator: 'begins_with',
         value: '9.05.25 Crushed',
+      })
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// inferValueType
+// ---------------------------------------------------------------------------
+
+describe('inferValueType', () => {
+  it('should return N for integer strings', () => {
+    expect(inferValueType('42')).toBe('N')
+    expect(inferValueType('0')).toBe('N')
+    expect(inferValueType('-7')).toBe('N')
+  })
+
+  it('should return N for decimal strings', () => {
+    expect(inferValueType('3.14')).toBe('N')
+    expect(inferValueType('99.99')).toBe('N')
+    expect(inferValueType('-0.5')).toBe('N')
+  })
+
+  it('should return S for plain strings', () => {
+    expect(inferValueType('ACTIVE')).toBe('S')
+    expect(inferValueType('hello world')).toBe('S')
+  })
+
+  it('should return S for empty string', () => {
+    expect(inferValueType('')).toBe('S')
+  })
+
+  it('should return S for strings that start with a number but are not numeric', () => {
+    expect(inferValueType('123abc')).toBe('S')
+    expect(inferValueType('1e3x')).toBe('S')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// parseFilterInput
+// ---------------------------------------------------------------------------
+
+describe('parseFilterInput', () => {
+  describe('empty / no-op input', () => {
+    it('should return null for empty string', () => {
+      expect(parseFilterInput('')).toBeNull()
+    })
+
+    it('should return null for whitespace-only string', () => {
+      expect(parseFilterInput('   ')).toBeNull()
+    })
+  })
+
+  describe('= operator', () => {
+    it('should parse "status = ACTIVE" as a string equals filter', () => {
+      const result = parseFilterInput('status = ACTIVE')
+      expect(result).toEqual({
+        expression: '#f = :f',
+        attributeNames: { '#f': 'status' },
+        attributeValues: { ':f': { S: 'ACTIVE' } },
+      })
+    })
+
+    it('should infer numeric type for numeric values', () => {
+      const result = parseFilterInput('price = 100')
+      expect(result?.attributeValues[':f']).toEqual({ N: '100' })
+    })
+  })
+
+  describe('comparison operators', () => {
+    it('should parse "price > 100"', () => {
+      const result = parseFilterInput('price > 100')
+      expect(result?.expression).toBe('#f > :f')
+      expect(result?.attributeNames).toEqual({ '#f': 'price' })
+      expect(result?.attributeValues[':f']).toEqual({ N: '100' })
+    })
+
+    it('should parse "score >= 50"', () => {
+      const result = parseFilterInput('score >= 50')
+      expect(result?.expression).toBe('#f >= :f')
+    })
+
+    it('should parse "rank < 10"', () => {
+      const result = parseFilterInput('rank < 10')
+      expect(result?.expression).toBe('#f < :f')
+    })
+
+    it('should parse "count <= 5"', () => {
+      const result = parseFilterInput('count <= 5')
+      expect(result?.expression).toBe('#f <= :f')
+    })
+  })
+
+  describe('begins_with operator', () => {
+    it('should parse "name begins_with Jo"', () => {
+      const result = parseFilterInput('name begins_with Jo')
+      expect(result).toEqual({
+        expression: 'begins_with(#f, :f)',
+        attributeNames: { '#f': 'name' },
+        attributeValues: { ':f': { S: 'Jo' } },
+      })
+    })
+
+    it('should preserve spaces in the value', () => {
+      const result = parseFilterInput('docId begins_with 9.05.25 Crushed')
+      expect(result?.attributeValues[':f']).toEqual({ S: '9.05.25 Crushed' })
+    })
+  })
+
+  describe('between operator', () => {
+    it('should parse "score between 10 AND 20"', () => {
+      const result = parseFilterInput('score between 10 AND 20')
+      expect(result).toEqual({
+        expression: '#f BETWEEN :f1 AND :f2',
+        attributeNames: { '#f': 'score' },
+        attributeValues: {
+          ':f1': { N: '10' },
+          ':f2': { N: '20' },
+        },
+      })
+    })
+
+    it('should support string bounds with spaces', () => {
+      const result = parseFilterInput(
+        'docId between 9.05.25 Crushed AND 9.05.26 Crushed'
+      )
+      expect(result?.expression).toBe('#f BETWEEN :f1 AND :f2')
+      expect(result?.attributeValues[':f1']).toEqual({
+        S: '9.05.25 Crushed',
+      })
+      expect(result?.attributeValues[':f2']).toEqual({
+        S: '9.05.26 Crushed',
       })
     })
   })

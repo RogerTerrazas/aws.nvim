@@ -36,6 +36,7 @@ function buildFormLines(tableDesc: TableDescription): string[] {
     `Index:  (primary)`,
     `PK (${primaryPkLabel}): `,
     `SK (${primarySkLabel}): `,
+    `Filter: `,
     `Limit:  50`,
     ``,
   ]
@@ -53,7 +54,15 @@ function buildFormLines(tableDesc: TableDescription): string[] {
     `# Examples:  "> 1000"   "begins_with ORDER"   "between 10 AND 20"`
   )
   lines.push(`# Values may contain spaces: "= my file.pdf"   "between a AND z"`)
-  lines.push(`# Press <CR> on any line to execute query. Press q to go back.`)
+  lines.push(`#`)
+  lines.push(`# Filter: <attr> <op> <value>  — applied after key lookup`)
+  lines.push(
+    `# Filter examples:  "status = ACTIVE"  "price > 100"  "name begins_with Jo"`
+  )
+  lines.push(
+    `# If PK is empty and Filter is set, a Scan is used instead of Query.`
+  )
+  lines.push(`# Press <CR> on any line to execute. Press q to go back.`)
 
   return lines
 }

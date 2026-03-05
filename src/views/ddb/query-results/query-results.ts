@@ -1,13 +1,20 @@
 import type { Buffer, NvimPlugin, Window } from 'neovim'
+import type { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { queryDynamoDBTable } from '../../../accessors/ddb/query'
 import type {
   QueryParams,
   SkCondition,
   SkOperator,
 } from '../../../accessors/ddb/query'
+import { scanDynamoDBTable } from '../../../accessors/ddb/items'
+import type { DynamoDBItem, FilterParams } from '../../../accessors/ddb/items'
 import { initializeDDBQueryResultsCommands } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
+
+// ---------------------------------------------------------------------------
+// Header builders
+// ---------------------------------------------------------------------------
 
 function formatSkCondition(condition: SkCondition, skName: string): string {
   const { operator, value, value2 } = condition
@@ -20,24 +27,90 @@ function formatSkCondition(condition: SkCondition, skName: string): string {
   return `${skName} ${operator} "${value}"`
 }
 
-function buildHeader(params: QueryParams, count: number): string[] {
-  const indexPart = params.indexName ? ` (index: ${params.indexName})` : ''
+function formatFilter(filter: FilterParams): string {
+  // Re-derive a human-readable form from the expression + name map
+  const expr = filter.expression
+  // Replace #f with the actual attribute name for display
+  const attrName = filter.attributeNames['#f'] ?? '#f'
+  return expr.replace('#f', attrName)
+}
 
+function buildQueryHeader(params: QueryParams, count: number): string[] {
+  const indexPart = params.indexName ? ` (index: ${params.indexName})` : ''
   const skPart =
     params.sortKeyName && params.sortKeyCondition
       ? ` AND ${formatSkCondition(params.sortKeyCondition, params.sortKeyName)}`
       : ''
+  const filterPart = params.filter
+    ? `  [filter: ${formatFilter(params.filter)}]`
+    : ''
 
   const query = `${params.partitionKeyName} = "${params.partitionKeyValue}"${skPart}`
 
   return [
     `DynamoDB Query Results: ${params.tableName}${indexPart}`,
-    `Query: ${query}`,
+    `Query: ${query}${filterPart}`,
     `Results: ${count} item${count !== 1 ? 's' : ''} (limit: ${params.limit})`,
     '='.repeat(80),
     '',
   ]
 }
+
+function buildScanHeader(
+  tableName: string,
+  filter: FilterParams,
+  limit: number,
+  count: number
+): string[] {
+  return [
+    `DynamoDB Scan Results: ${tableName}`,
+    `Filter: ${formatFilter(filter)}`,
+    `Results: ${count} item${count !== 1 ? 's' : ''} (limit: ${limit})`,
+    '='.repeat(80),
+    '',
+  ]
+}
+
+// ---------------------------------------------------------------------------
+// Arg deserialisation helpers
+// ---------------------------------------------------------------------------
+
+function parseFilterFromArgs(
+  filterExpr: string,
+  filterNamesJson: string,
+  filterValuesJson: string
+): FilterParams | undefined {
+  if (!filterExpr || !filterNamesJson || !filterValuesJson) return undefined
+  try {
+    const attributeNames = JSON.parse(filterNamesJson) as Record<string, string>
+    const attributeValues = JSON.parse(filterValuesJson) as Record<
+      string,
+      AttributeValue
+    >
+    return { expression: filterExpr, attributeNames, attributeValues }
+  } catch {
+    return undefined
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Item renderer (shared)
+// ---------------------------------------------------------------------------
+
+function renderItems(items: DynamoDBItem[]): string[] {
+  if (items.length === 0) return ['No items found.']
+  const lines: string[] = []
+  items.forEach((item, index) => {
+    lines.push(`Item ${index + 1}:`)
+    lines.push(...JSON.stringify(item, null, 2).split('\n'))
+    lines.push('-'.repeat(80))
+  })
+  return lines
+}
+
+// ---------------------------------------------------------------------------
+// View initialiser
+// ---------------------------------------------------------------------------
 
 export async function initializeDDBQueryResultsView(
   plugin: NvimPlugin,
@@ -46,14 +119,16 @@ export async function initializeDDBQueryResultsView(
 ): Promise<void> {
   const nvim = plugin.nvim
 
-  // Args: [tableName, indexName, pkName, pkValue, pkType,
-  //        skName, skOperator, skValue, skValue2, skType, limit]
-  if (!args || args.length < 5) {
+  // Args: [mode, tableName, indexName, pkName, pkValue, pkType,
+  //        skName, skOperator, skValue, skValue2, skType,
+  //        filterExpr, filterNamesJson, filterValuesJson, limit]
+  if (!args || args.length < 2) {
     await nvim.errWrite('Query results view requires query parameters.\n')
     return
   }
 
   const [
+    mode,
     tableName,
     indexName,
     pkName,
@@ -64,50 +139,66 @@ export async function initializeDDBQueryResultsView(
     skValue,
     skValue2,
     skType,
+    filterExpr,
+    filterNamesJson,
+    filterValuesJson,
     limitRaw,
   ] = args
 
-  // Reconstruct SkCondition from the serialised args
-  const skCondition: SkCondition | undefined =
-    skName && skOperator && skValue
-      ? {
-          operator: skOperator as SkOperator,
-          value: skValue,
-          ...(skValue2 ? { value2: skValue2 } : {}),
-        }
-      : undefined
+  const limit = parseInt(limitRaw ?? '50', 10) || 50
 
-  const params: QueryParams = {
-    tableName: tableName ?? '',
-    ...(indexName ? { indexName } : {}),
-    partitionKeyName: pkName ?? '',
-    partitionKeyValue: pkValue ?? '',
-    partitionKeyType: pkType ?? 'S',
-    ...(skName && skCondition && skType
-      ? {
-          sortKeyName: skName,
-          sortKeyCondition: skCondition,
-          sortKeyType: skType,
-        }
-      : {}),
-    limit: parseInt(limitRaw ?? '50', 10) || 50,
-  }
+  const filter = parseFilterFromArgs(
+    filterExpr ?? '',
+    filterNamesJson ?? '',
+    filterValuesJson ?? ''
+  )
 
   try {
-    const items = await queryDynamoDBTable(params)
+    let items: DynamoDBItem[]
+    let headerLines: string[]
 
-    const lines: string[] = [...buildHeader(params, items.length)]
-
-    if (items.length === 0) {
-      lines.push('No items found.')
+    if (mode === 'scan') {
+      // PK was empty — use ScanCommand with FilterExpression
+      items = await scanDynamoDBTable(tableName ?? '', limit, filter)
+      headerLines = buildScanHeader(
+        tableName ?? '',
+        filter!,
+        limit,
+        items.length
+      )
     } else {
-      items.forEach((item, index) => {
-        lines.push(`Item ${index + 1}:`)
-        const jsonLines = JSON.stringify(item, null, 2).split('\n')
-        lines.push(...jsonLines)
-        lines.push('-'.repeat(80))
-      })
+      // mode === 'query'
+      const skCondition: SkCondition | undefined =
+        skName && skOperator && skValue
+          ? {
+              operator: skOperator as SkOperator,
+              value: skValue,
+              ...(skValue2 ? { value2: skValue2 } : {}),
+            }
+          : undefined
+
+      const params: QueryParams = {
+        tableName: tableName ?? '',
+        ...(indexName ? { indexName } : {}),
+        partitionKeyName: pkName ?? '',
+        partitionKeyValue: pkValue ?? '',
+        partitionKeyType: pkType ?? 'S',
+        ...(skName && skCondition && skType
+          ? {
+              sortKeyName: skName,
+              sortKeyCondition: skCondition,
+              sortKeyType: skType,
+            }
+          : {}),
+        ...(filter ? { filter } : {}),
+        limit,
+      }
+
+      items = await queryDynamoDBTable(params)
+      headerLines = buildQueryHeader(params, items.length)
     }
+
+    const lines: string[] = [...headerLines, ...renderItems(items)]
 
     const buffer = (await nvim.createBuffer(false, true)) as Buffer
 

@@ -1,7 +1,7 @@
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'
 import type { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { unmarshall } from '@aws-sdk/util-dynamodb'
-import type { DynamoDBItem } from './items'
+import type { DynamoDBItem, FilterParams } from './items'
 
 export type SkOperator =
   | '='
@@ -27,6 +27,7 @@ export interface QueryParams {
   sortKeyName?: string
   sortKeyCondition?: SkCondition
   sortKeyType?: string // S | N | B
+  filter?: FilterParams
   limit: number
 }
 
@@ -64,18 +65,28 @@ export async function queryDynamoDBTable(
       expressionValues[':sk'] = marshalValue(value, sortKeyType)
       keyConditionExpression += ' AND begins_with(#sk, :sk)'
     } else {
-      // =, <, <=, >, >=
       expressionValues[':sk'] = marshalValue(value, sortKeyType)
       keyConditionExpression += ` AND #sk ${operator} :sk`
     }
+  }
+
+  // Merge filter attribute names/values — filter uses #f/:f prefixes so no collision
+  const mergedNames: Record<string, string> = {
+    ...expressionNames,
+    ...(params.filter?.attributeNames ?? {}),
+  }
+  const mergedValues: Record<string, AttributeValue> = {
+    ...expressionValues,
+    ...(params.filter?.attributeValues ?? {}),
   }
 
   const command = new QueryCommand({
     TableName: params.tableName,
     ...(params.indexName ? { IndexName: params.indexName } : {}),
     KeyConditionExpression: keyConditionExpression,
-    ExpressionAttributeNames: expressionNames,
-    ExpressionAttributeValues: expressionValues,
+    ExpressionAttributeNames: mergedNames,
+    ExpressionAttributeValues: mergedValues,
+    ...(params.filter ? { FilterExpression: params.filter.expression } : {}),
     Limit: params.limit,
   })
 

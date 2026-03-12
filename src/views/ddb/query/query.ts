@@ -117,6 +117,7 @@ export async function initializeDDBQueryView(
 
 export const ddbQueryViewEntry: ViewRegistryEntry = {
   name: 'dynamo_db_query',
+  bufferLabel: (tableName: string) => `DynamoDB Query: ${tableName}`,
   initialize: initializeDDBQueryView,
   actions: {
     submit: submitDDBQuery,

@@ -137,6 +137,7 @@ export async function initializeCWQueryView(
 
 export const cwQueryViewEntry: ViewRegistryEntry = {
   name: 'cloudwatch_query',
+  bufferLabel: 'CloudWatch Logs Insights',
   initialize: initializeCWQueryView,
   actions: {
     submit: submitCWQuery,

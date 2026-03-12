@@ -83,6 +83,7 @@ export async function initializeAccountsView(
  */
 export const accountsViewEntry: ViewRegistryEntry = {
   name: 'aws_accounts',
+  bufferLabel: 'AWS Profiles',
   initialize: initializeAccountsView,
   actions: {
     select: selectAccount,

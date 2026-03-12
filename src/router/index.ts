@@ -1,6 +1,12 @@
 import { NvimPlugin } from 'neovim'
-import type { ViewRegistryEntry, CommandType, BufferFiletype } from '../types'
+import type {
+  ViewRegistryEntry,
+  CommandType,
+  BufferFiletype,
+  BufferLabelResolver,
+} from '../types'
 import { FILETYPE_TO_VIEW } from '../types'
+import { getBufferTitle } from '../session/index'
 
 /**
  * Registry for all views and their associated actions
@@ -74,6 +80,38 @@ export function parseCommand(args: string[]): {
 }
 
 /**
+ * Resolve a BufferLabelResolver to a concrete label string.
+ */
+function resolveBufferLabel(
+  resolver: BufferLabelResolver,
+  args: string[]
+): string {
+  return typeof resolver === 'function' ? resolver(...args) : resolver
+}
+
+/**
+ * Search for an existing buffer by name using Neovim's built-in bufnr().
+ * Returns the buffer handle (number) if a valid, loaded buffer is found,
+ * or null otherwise.
+ *
+ * We use bufnr() rather than iterating nvim_list_bufs + nvim_buf_get_name
+ * because nvim_buf_get_name returns a fully-resolved absolute path, which
+ * may not match the short name originally passed to nvim_buf_set_name.
+ * bufnr() performs the same name matching that Neovim itself uses.
+ */
+async function findExistingBuffer(
+  nvim: any,
+  targetName: string
+): Promise<number | null> {
+  // bufnr() returns -1 when no buffer with that name exists
+  const bufnr: number = await nvim.call('bufnr', [targetName])
+  if (bufnr === -1) return null
+
+  const valid: boolean = await nvim.call('nvim_buf_is_valid', [bufnr])
+  return valid ? bufnr : null
+}
+
+/**
  * Handle route command - navigate to a specific view
  */
 export async function handleRoute(
@@ -96,7 +134,19 @@ export async function handleRoute(
     // Use the current window
     const window = await nvim.window
 
-    // Initialize the view
+    // Check if a buffer for this view already exists and reuse it
+    const label = resolveBufferLabel(viewEntry.bufferLabel, args)
+    const expectedName = getBufferTitle(label)
+    const existingBuf = await findExistingBuffer(nvim, expectedName)
+
+    if (existingBuf !== null) {
+      // Switch to the existing buffer — let Neovim handle it
+      await nvim.call('nvim_win_set_buf', [window.id, existingBuf])
+      viewRegistry.setCurrentView(target)
+      return
+    }
+
+    // No existing buffer — initialize the view (creates a new buffer)
     await viewEntry.initialize(plugin, window, args)
 
     // Set this as the current view

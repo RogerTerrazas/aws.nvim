@@ -94,6 +94,7 @@ export async function initializeDDBTableView(
  */
 export const ddbTableViewEntry: ViewRegistryEntry = {
   name: 'dynamo_db_table',
+  bufferLabel: (tableName: string) => `DynamoDB Table: ${tableName}`,
   initialize: initializeDDBTableView,
   actions: {
     // Future actions can be added here (e.g., refresh, filter, etc.)

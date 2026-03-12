@@ -69,6 +69,10 @@ describe('Router', () => {
 
       const mockNvim = {
         command: vi.fn().mockResolvedValue(undefined),
+        call: vi.fn().mockImplementation((method: string) => {
+          if (method === 'bufnr') return Promise.resolve(-1)
+          return Promise.resolve(undefined)
+        }),
         window: Promise.resolve({ id: 1 }),
         errWrite: vi.fn().mockResolvedValue(undefined),
       }
@@ -80,6 +84,7 @@ describe('Router', () => {
       // Register a test view for the default landing target
       const testView: ViewRegistryEntry = {
         name: 'aws_home',
+        bufferLabel: 'Home',
         initialize: mockInitialize as any,
         actions: {},
       }

@@ -220,6 +220,7 @@ export async function initializeCWQueryResultsView(
 
 export const cwQueryResultsViewEntry: ViewRegistryEntry = {
   name: 'cloudwatch_query_results',
+  bufferLabel: 'CloudWatch Logs Insights — Results',
   initialize: initializeCWQueryResultsView,
   actions: {
     refresh: refreshCWQuery,

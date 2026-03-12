@@ -57,6 +57,7 @@ export async function initializeDDBTablesView(
  */
 export const ddbTablesViewEntry: ViewRegistryEntry = {
   name: 'dynamo_db_tables',
+  bufferLabel: 'DynamoDB Tables',
   initialize: initializeDDBTablesView,
   actions: {
     select: selectDDBTable,

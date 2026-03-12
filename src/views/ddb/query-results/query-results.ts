@@ -232,6 +232,10 @@ export async function initializeDDBQueryResultsView(
 
 export const ddbQueryResultsViewEntry: ViewRegistryEntry = {
   name: 'dynamo_db_query_results',
+  bufferLabel: (mode: string, tableName: string) =>
+    mode === 'scan'
+      ? `DynamoDB Scan: ${tableName ?? ''}`
+      : `DynamoDB Query: ${tableName ?? ''}`,
   initialize: initializeDDBQueryResultsView,
   actions: {},
 }

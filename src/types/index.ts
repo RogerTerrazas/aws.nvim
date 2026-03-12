@@ -70,9 +70,15 @@ export type ActionHandler = (
   args?: string[]
 ) => Promise<void>
 
+// Buffer label resolver — returns the label passed to getBufferTitle().
+// A plain string for static views, or a function for parameterised views
+// that derive the label from the route args (e.g. table name).
+export type BufferLabelResolver = string | ((...args: string[]) => string)
+
 // View registry entry
 export interface ViewRegistryEntry {
   name: ViewName
+  bufferLabel: BufferLabelResolver
   initialize: ViewInitializer
   actions?: Record<string, ActionHandler>
 }

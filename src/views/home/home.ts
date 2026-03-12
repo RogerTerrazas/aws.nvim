@@ -128,6 +128,7 @@ export async function initializeHomeView(
 
 export const homeViewEntry: ViewRegistryEntry = {
   name: 'aws_home',
+  bufferLabel: 'Home',
   initialize: initializeHomeView,
   actions: {
     select: selectHomeEntry,

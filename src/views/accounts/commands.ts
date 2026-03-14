@@ -19,7 +19,7 @@ export function parseProfileNameFromLine(line: string): string {
 }
 
 /**
- * Action: Select the AWS profile on the current line and route to tables view.
+ * Action: Select the AWS profile on the current line and route to the home view.
  */
 export async function selectAccount(plugin: NvimPlugin): Promise<void> {
   const nvim = plugin.nvim
@@ -48,8 +48,8 @@ export async function selectAccount(plugin: NvimPlugin): Promise<void> {
       `echo "Switched to AWS profile: ${profile.name}${profile.region ? ' (' + profile.region + ')' : ''}"`
     )
 
-    // Navigate to the DynamoDB tables view with the new profile
-    await handleRoute(plugin, 'dynamo_db_tables', [])
+    // Navigate to the home view with the new profile
+    await handleRoute(plugin, 'aws_home', [])
   } catch (error) {
     await nvim.errWrite(`Error selecting profile: ${String(error)}\n`)
   }

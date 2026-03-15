@@ -1,0 +1,258 @@
+*nvim-aws.txt*   AWS integration for Neovim                         *aws.nvim*
+
+Author:   Roger Terrazas
+Repo:     https://github.com/rogerterrazas/aws.nvim
+License:  MIT
+
+==============================================================================
+CONTENTS                                                    *aws.nvim-contents*
+
+  1. Introduction .............. |aws.nvim-intro|
+  2. Requirements .............. |aws.nvim-requirements|
+  3. Installation .............. |aws.nvim-installation|
+  4. Commands .................. |aws.nvim-commands|
+  5. Views ..................... |aws.nvim-views|
+  6. Keybindings ............... |aws.nvim-keybindings|
+  7. Health check .............. |aws.nvim-health|
+  8. Logs ...................... |aws.nvim-logs|
+  9. Troubleshooting ........... |aws.nvim-troubleshooting|
+ 10. Contributing .............. |aws.nvim-contributing|
+
+==============================================================================
+1. INTRODUCTION                                               *aws.nvim-intro*
+
+aws.nvim is a Neovim plugin for AWS integration. It provides a buffer-based
+UI for browsing DynamoDB tables, running CloudWatch Logs Insights queries, and
+switching between AWS profiles — without leaving Neovim.
+
+aws.nvim is implemented in TypeScript and runs as a Node.js remote plugin
+(|remote-plugin|). It communicates with Neovim over msgpack-RPC; there are no
+Lua runtime dependencies.
+
+==============================================================================
+2. REQUIREMENTS                                        *aws.nvim-requirements*
+
+  - Neovim >= 0.9
+  - Node.js >= 16  (must be on the $PATH Neovim uses)
+  - npm            (any version)
+  - AWS credentials configured in ~/.aws/config
+
+The plugin's node_modules/ is self-contained and will not interfere with other
+Node.js or TypeScript projects in your workspace.
+
+==============================================================================
+3. INSTALLATION                                        *aws.nvim-installation*
+
+------------------------------------------------------------------------------
+lazy.nvim ~
+
+>lua
+  {
+    'rogerterrazas/aws.nvim',
+    build = 'npm install && npm run build',
+    config = function()
+      -- No setup() call is required.
+      -- After install or update, run :UpdateRemotePlugins once,
+      -- then restart Neovim.
+    end,
+  }
+<
+
+------------------------------------------------------------------------------
+packer.nvim ~
+
+>lua
+  use {
+    'rogerterrazas/aws.nvim',
+    run = 'npm install && npm run build',
+  }
+<
+
+------------------------------------------------------------------------------
+Manual ~
+
+>bash
+  git clone https://github.com/rogerterrazas/aws.nvim \
+    ~/.local/share/nvim/site/pack/plugins/start/aws.nvim
+
+  cd ~/.local/share/nvim/site/pack/plugins/start/aws.nvim
+  npm install
+  npm run build
+<
+
+------------------------------------------------------------------------------
+After installing (all methods) ~
+
+Run the following in Neovim and then restart:
+>vim
+  :UpdateRemotePlugins
+<
+
+This registers the |:NvimAws| command in Neovim's remote-plugin manifest. You
+must repeat this step after every plugin update.
+
+==============================================================================
+4. COMMANDS                                                *aws.nvim-commands*
+
+                                                                   *:NvimAws*
+:NvimAws
+    Open the aws.nvim home screen.
+
+:NvimAws route {view}
+    Navigate to {view}. See |aws.nvim-views| for the list of valid view names.
+
+    Example: >vim
+      :NvimAws route dynamo_db_tables
+      :NvimAws route cloudwatch_query
+      :NvimAws route aws_accounts
+<
+
+:NvimAws action {action}
+    Execute {action} on the currently focused aws.nvim buffer. Actions are
+    view-specific; they are also available as keybindings (|aws.nvim-keybindings|).
+
+    Example: >vim
+      :NvimAws action select
+      :NvimAws action refresh
+<
+
+==============================================================================
+5. VIEWS                                                      *aws.nvim-views*
+
+  View name                   Description ~
+  ─────────────────────────── ──────────────────────────────────────────────
+  aws_home                    Home screen with navigation menu
+  aws_accounts                AWS profile switcher (reads ~/.aws/config)
+  dynamo_db_tables            List all DynamoDB tables in the active account
+  dynamo_db_table             Scan up to 50 items from a table (JSON)
+  dynamo_db_query             DynamoDB query form (PK / SK / filter / index)
+  dynamo_db_query_results     DynamoDB query or scan results
+  cloudwatch_query            CloudWatch Logs Insights query form
+  cloudwatch_query_results    CloudWatch Logs Insights results (async poll)
+
+All views open in a dedicated buffer with filetype `nvim-aws-*`. Buffers are
+reused across navigations; orphaned buffers are replaced automatically.
+
+==============================================================================
+6. KEYBINDINGS                                          *aws.nvim-keybindings*
+
+Keybindings are buffer-local and set automatically when a view opens.
+
+------------------------------------------------------------------------------
+Home (aws_home) ~
+
+  Key       Action ~
+  ───────── ───────────────────────────────────
+  d         Go to DynamoDB tables view
+  c         Go to CloudWatch Logs Insights
+  a         Go to AWS profile switcher
+  <CR>      Select the highlighted menu item
+
+------------------------------------------------------------------------------
+AWS Profiles (aws_accounts) ~
+
+  Key       Action ~
+  ───────── ───────────────────────────────────
+  <CR>      Activate the profile under the cursor
+
+------------------------------------------------------------------------------
+DynamoDB Tables (dynamo_db_tables) ~
+
+  Key       Action ~
+  ───────── ───────────────────────────────────
+  <CR>      Open scan view for table under cursor
+  <C-CR>    Open scan view for table under cursor
+  q         Open query form for table under cursor
+  a         Open AWS profile switcher
+
+------------------------------------------------------------------------------
+DynamoDB Query Form (dynamo_db_query) ~
+
+  Key       Action ~
+  ───────── ───────────────────────────────────
+  <CR>      Submit the query
+
+------------------------------------------------------------------------------
+DynamoDB Table / Query Results ~
+
+  Key       Action ~
+  ───────── ───────────────────────────────────
+  q         Go back
+
+------------------------------------------------------------------------------
+CloudWatch Logs Insights Query Form (cloudwatch_query) ~
+
+  Key       Action ~
+  ───────── ───────────────────────────────────
+  <CR>      Submit the query
+
+------------------------------------------------------------------------------
+CloudWatch Logs Insights Results (cloudwatch_query_results) ~
+
+  Key       Action ~
+  ───────── ───────────────────────────────────
+  r         Re-run the query with a shifted time window
+
+==============================================================================
+7. HEALTH CHECK                                              *aws.nvim-health*
+
+Run the built-in health check to verify your installation:
+
+>vim
+  :checkhealth aws
+<
+
+The health check verifies:
+  - Node.js is on $PATH
+  - npm is on $PATH
+  - dist/index.js exists (plugin has been built)
+  - The neovim npm package is present in node_modules/
+  - The NvimAws command is registered in the remote-plugin manifest
+  - ~/.aws/config exists (AWS credentials hint)
+
+==============================================================================
+8. LOGS                                                        *aws.nvim-logs*
+
+The plugin writes debug output to:
+
+  ~/.local/state/nvim/nvim-aws.log
+
+Inspect this file when diagnosing errors.
+
+==============================================================================
+9. TROUBLESHOOTING                                    *aws.nvim-troubleshooting*
+
+`:NvimAws` command not found ~
+  Run |:UpdateRemotePlugins| and restart Neovim. This is required after every
+  install or update of the plugin.
+
+Error: Cannot find module '.../dist/index.js' ~
+  The build step did not complete. In the plugin directory run:
+>bash
+    npm install && npm run build
+<
+  Then run |:UpdateRemotePlugins| and restart Neovim.
+
+Error loading plugin / blank screen ~
+  Check ~/.local/state/nvim/nvim-aws.log for details.
+
+No tables or log groups shown ~
+  - Verify credentials: `aws sts get-caller-identity`
+  - Confirm the active profile has a region set in ~/.aws/config
+  - Use `:NvimAws route aws_accounts` to switch profiles
+
+Node.js not found ~
+  Ensure `node` is on the $PATH that Neovim sees. If you use a version manager
+  (nvm, fnm, volta), initialise it in your shell rc file (e.g., ~/.zshrc)
+  rather than an interactive-only file such as ~/.zshenv.
+
+==============================================================================
+10. CONTRIBUTING                                        *aws.nvim-contributing*
+
+See SETUP.md in the plugin repository for the development workflow, project
+architecture, and instructions on adding new views.
+
+  https://github.com/rogerterrazas/aws.nvim/blob/main/SETUP.md
+
+==============================================================================
+vim:ft=help:tw=78:ts=2:et:

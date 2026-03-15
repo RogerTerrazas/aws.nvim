@@ -1,12 +1,13 @@
 # aws.nvim
 
-A Neovim plugin for AWS integration, built with TypeScript and Node.js.
+A Neovim plugin for AWS, built with TypeScript and Node.js.
 
-Browse DynamoDB tables, run CloudWatch Logs Insights queries, and switch AWS
-profiles — all from inside Neovim.
+The goal of this project is to recreate the AWS console — and go beyond it —
+as a terminal interface with keyboard-driven navigation
 
-> **Note:** aws.nvim is a [Node.js remote plugin][rplugin]. It requires Node.js
-> and a one-time build step. See [Installation](#installation) for details.
+> **Note:** aws.nvim is a [Node.js remote plugin][rplugin]. It requires Node.js,
+> a one-time build step, and a Neovim restart after install or update.
+> See [Installation](#installation) for details.
 
 ## Demo
 
@@ -14,9 +15,6 @@ profiles — all from inside Neovim.
 
 ## Features
 
-- **Home view** — ASCII art landing screen with quick navigation menu
-- **AWS profile switcher** — select any profile from `~/.aws/config`; all
-  subsequent requests use that profile's credentials and region
 - **DynamoDB**
   - Browse all tables in the active account
   - Scan the first 50 items of any table (JSON view)
@@ -37,7 +35,8 @@ profiles — all from inside Neovim.
 
 **AWS credentials** must be configured in `~/.aws/config` (the same profiles
 you use with the AWS CLI). The plugin reads credentials and region from
-whichever profile you select in the profile switcher.
+whichever profile is active. You can optionally switch profiles via
+`:NvimAws route aws_accounts`.
 
 Run `:checkhealth aws` after installing to verify all requirements are met.
 
@@ -48,19 +47,13 @@ Run `:checkhealth aws` after installing to verify all requirements are met.
 ```lua
 {
   'rogerterrazas/aws.nvim',
-  build = 'npm install && npm run build',
-  config = function()
-    -- No setup call is required.
-    -- After install or update, run :UpdateRemotePlugins once, then restart Neovim.
-  end,
+  build = { 'npm install && npm run build', ':UpdateRemotePlugins' },
 }
 ```
 
-> **Important — one-time setup step:**
-> After installing (or updating) the plugin, you must run `:UpdateRemotePlugins`
-> in Neovim and then **restart Neovim**. This registers the `NvimAws` command in
-> Neovim's remote-plugin manifest. You only need to do this again if you update
-> the plugin.
+> **One-time restart required:**
+> After the build completes, **restart Neovim once** so the updated remote-plugin
+> manifest takes effect. You only need to do this again if you update the plugin.
 
 ### packer.nvim
 
@@ -104,79 +97,11 @@ Everything is accessed through the `:NvimAws` command.
 :NvimAws
 ```
 
-### Navigate to a view
-
-```vim
-:NvimAws route <view>
-```
-
-| View name                  | Description                         |
-| -------------------------- | ----------------------------------- |
-| `aws_accounts`             | AWS profile switcher                |
-| `dynamo_db_tables`         | List all DynamoDB tables            |
-| `dynamo_db_table`          | Scan items in a table (50 items)    |
-| `dynamo_db_query`          | DynamoDB query form                 |
-| `dynamo_db_query_results`  | DynamoDB query / scan results       |
-| `cloudwatch_query`         | CloudWatch Logs Insights query form |
-| `cloudwatch_query_results` | CloudWatch Logs Insights results    |
-
 ### Trigger an action on the current view
 
 ```vim
 :NvimAws action <action>
 ```
-
-### Keybindings
-
-Keybindings are set per-buffer when a view is opened.
-
-#### Home
-
-| Key    | Action                         |
-| ------ | ------------------------------ |
-| `d`    | Go to DynamoDB tables          |
-| `c`    | Go to CloudWatch Logs Insights |
-| `a`    | Go to AWS profile switcher     |
-| `<CR>` | Select highlighted menu item   |
-
-#### AWS Profiles
-
-| Key    | Action                   |
-| ------ | ------------------------ |
-| `<CR>` | Select profile on cursor |
-
-#### DynamoDB Tables
-
-| Key      | Action                    |
-| -------- | ------------------------- |
-| `<CR>`   | Open scan view for table  |
-| `<C-CR>` | Open scan view for table  |
-| `q`      | Open query form for table |
-| `a`      | Open AWS profile switcher |
-
-#### DynamoDB Query Form
-
-| Key    | Action       |
-| ------ | ------------ |
-| `<CR>` | Submit query |
-
-#### DynamoDB Table / Query Results
-
-| Key | Action  |
-| --- | ------- |
-| `q` | Go back |
-
-#### CloudWatch Logs Insights Query Form
-
-| Key    | Action       |
-| ------ | ------------ |
-| `<CR>` | Submit query |
-
-#### CloudWatch Logs Insights Results
-
-| Key | Action                                |
-| --- | ------------------------------------- |
-| `r` | Re-run query with shifted time window |
 
 ### Workflow examples
 
@@ -194,14 +119,6 @@ Keybindings are set per-buffer when a view is opened.
 :NvimAws route cloudwatch_query  " open the query form
 " fill in time range, log groups, and your Insights query
 " press <CR> to run — results load asynchronously
-```
-
-**Switch AWS profile:**
-
-```vim
-:NvimAws route aws_accounts  " open profile list
-" press <CR> on any profile to activate it
-" all subsequent requests use that profile's credentials and region
 ```
 
 ## Health check
@@ -238,7 +155,6 @@ Check `~/.local/state/nvim/nvim-aws.log` for detailed error output.
 
 - Confirm your AWS credentials are configured: `aws sts get-caller-identity`
 - Check that the active profile has the correct region set in `~/.aws/config`
-- Use `:NvimAws route aws_accounts` to switch to a different profile
 
 **Node.js not found**
 

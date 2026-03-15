@@ -1,5 +1,5 @@
 {
-  "name": "nvim-aws",
+  "name": "aws.nvim",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",

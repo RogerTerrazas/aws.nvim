@@ -11,6 +11,41 @@ import {
   selectDDBTable,
 } from './commands'
 
+// ─── Layout helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Build the full set of lines for the DDB tables buffer.
+ *
+ * Layout:
+ *   <table names — one per line>
+ *
+ *   <keybinding legend>
+ */
+export function buildDDBTablesLines(tableNames: string[]): string[] {
+  const lines: string[] = []
+
+  // ── Table list ────────────────────────────────────────────────────────────
+  if (tableNames.length === 0) {
+    lines.push('  (no tables found in this account/region)')
+  } else {
+    for (const name of tableNames) {
+      lines.push(name)
+    }
+  }
+  lines.push('')
+
+  // ── Keybinding legend ─────────────────────────────────────────────────────
+  lines.push('  Keybindings')
+  lines.push('  ──────────────────────────────────────')
+  lines.push('  <CR>  →  Scan table under cursor (first 50 items)')
+  lines.push('  q     →  Open query form for table under cursor')
+  lines.push('  a     →  Switch AWS profile')
+
+  return lines
+}
+
+// ─── View initializer ────────────────────────────────────────────────────────
+
 export async function initializeDDBTablesView(
   plugin: NvimPlugin,
   window: Window,
@@ -21,16 +56,15 @@ export async function initializeDDBTablesView(
   // Get DynamoDB tables
   const tableNames = await listDynamoDBTables()
 
-  // Format as a clean list (one table per line)
-  const lines: string[] = tableNames || []
-
-  if (lines.length === 0) {
+  if (!tableNames || tableNames.length === 0) {
     logger.warn('initializeDDBTablesView: no tables returned from AWS', {})
   } else {
     logger.debug('initializeDDBTablesView: tables fetched', {
-      tableCount: lines.length,
+      tableCount: tableNames.length,
     })
   }
+
+  const lines = buildDDBTablesLines(tableNames ?? [])
 
   // TODO: Create mapped model based on response
 

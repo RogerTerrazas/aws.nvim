@@ -9,19 +9,21 @@ export async function openAccountSwitcher(plugin: NvimPlugin): Promise<void> {
 }
 
 /**
- * Action: Select DynamoDB table on current line and route to table view
+ * Action: Select DynamoDB table on current line and route to table view.
+ * Lines that are blank, start with whitespace (legend/doc lines), or start
+ * with '#' are silently ignored.
  */
 export async function selectDDBTable(plugin: NvimPlugin): Promise<void> {
   const nvim = plugin.nvim
   try {
     const line = await nvim.line
     const tableName = line.trim()
-    if (tableName) {
-      // Route to the table view with the table name as an argument
-      await handleRoute(plugin, 'dynamo_db_table', [tableName])
-    } else {
-      await nvim.command('echo "No table name on current line"')
+    const isDocLine = !tableName || line.startsWith(' ') || line.startsWith('#')
+    if (isDocLine) {
+      return
     }
+    // Route to the table view with the table name as an argument
+    await handleRoute(plugin, 'dynamo_db_table', [tableName])
   } catch (error) {
     await nvim.errWrite(`Error selecting table: ${String(error)}\n`)
     await nvim.command(
@@ -31,18 +33,20 @@ export async function selectDDBTable(plugin: NvimPlugin): Promise<void> {
 }
 
 /**
- * Action: Open query form for the DynamoDB table on the current line
+ * Action: Open query form for the DynamoDB table on the current line.
+ * Lines that are blank, start with whitespace (legend/doc lines), or start
+ * with '#' are silently ignored.
  */
 export async function queryDDBTable(plugin: NvimPlugin): Promise<void> {
   const nvim = plugin.nvim
   try {
     const line = await nvim.line
     const tableName = line.trim()
-    if (tableName) {
-      await handleRoute(plugin, 'dynamo_db_query', [tableName])
-    } else {
-      await nvim.command('echo "No table name on current line"')
+    const isDocLine = !tableName || line.startsWith(' ') || line.startsWith('#')
+    if (isDocLine) {
+      return
     }
+    await handleRoute(plugin, 'dynamo_db_query', [tableName])
   } catch (error) {
     await nvim.errWrite(`Error opening query view: ${String(error)}\n`)
   }

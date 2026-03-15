@@ -1,5 +1,6 @@
 import type { NvimPlugin } from 'neovim'
 import { router, viewRegistry } from './router'
+import { logger } from './utils/logger'
 import { homeViewEntry } from './views/home/home'
 import { accountsViewEntry } from './views/accounts/accounts'
 import { ddbTablesViewEntry } from './views/ddb/tables/tables'
@@ -13,6 +14,11 @@ import { cwQueryResultsViewEntry } from './views/cloudwatch/query-results/query-
 export default function (plugin: NvimPlugin): void {
   // Register the plugin with Neovim
   plugin.setOptions({ dev: false })
+
+  logger.info('nvim-aws plugin loaded', {
+    pid: process.pid,
+    logPath: logger.getLogPath(),
+  })
 
   // Register all views with the view registry
   viewRegistry.register(homeViewEntry)

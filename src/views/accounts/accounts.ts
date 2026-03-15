@@ -6,6 +6,7 @@ import { getBufferTitle } from '../../session/index'
 import { initializeAccountsCommands, selectAccount } from './commands'
 import type { ViewRegistryEntry } from '../../types'
 import { VIEW_TO_FILETYPE } from '../../types'
+import { logger } from '../../utils/logger'
 
 /**
  * Format a single profile line for the accounts buffer.
@@ -56,6 +57,10 @@ export async function initializeAccountsView(
     }
   }
 
+  logger.debug('initializeAccountsView: creating buffer', {
+    profileCount: lines.length,
+  })
+
   const buffer = (await nvim.createBuffer(false, true)) as Buffer
 
   await nvim.call('nvim_buf_set_option', [buffer, 'buftype', 'nofile'])
@@ -73,7 +78,16 @@ export async function initializeAccountsView(
   const bufferTitle = getBufferTitle('AWS Profiles')
   await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
+  logger.debug('initializeAccountsView: setting buffer in window', {
+    bufnr: buffer.id,
+    windowId: window.id,
+    bufferTitle,
+  })
   await nvim.call('nvim_win_set_buf', [window.id, buffer])
+  logger.info('initializeAccountsView: buffer set in window', {
+    bufnr: buffer.id,
+    lineCount: lines.length,
+  })
 
   await initializeAccountsCommands(plugin, buffer)
 }

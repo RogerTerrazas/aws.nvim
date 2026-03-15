@@ -7,6 +7,7 @@ import type {
 } from '../types'
 import { FILETYPE_TO_VIEW } from '../types'
 import { getBufferTitle } from '../session/index'
+import { logger } from '../utils/logger'
 
 /**
  * Registry for all views and their associated actions
@@ -105,11 +106,46 @@ async function findExistingBuffer(
 ): Promise<number | null> {
   // bufnr() returns -1 when no buffer with that name exists
   const bufnr: number = await nvim.call('bufnr', [targetName])
-  if (bufnr === -1) return null
+
+  logger.debug('findExistingBuffer: bufnr lookup', { targetName, bufnr })
+
+  if (bufnr === -1) {
+    logger.debug('findExistingBuffer: no buffer found', { targetName })
+    return null
+  }
 
   const valid: boolean = await nvim.call('nvim_buf_is_valid', [bufnr])
-  return valid ? bufnr : null
+  const result = valid ? bufnr : null
+
+  logger.debug('findExistingBuffer: validity check', {
+    targetName,
+    bufnr,
+    valid,
+    returning: result,
+  })
+
+  return result
 }
+
+/**
+ * Tracks views whose initialize() is currently in progress.
+ *
+ * Because all NvimAws commands are fire-and-forget (sync: false), a user can
+ * trigger a second route to the same view before the first async initialize()
+ * call completes. Without this guard the following race occurs:
+ *
+ *   1. initialize() is called — AWS request in flight
+ *   2. User triggers the same route again
+ *   3. Second handleRoute runs, finds no named buffer yet (it's still being
+ *      built), launches a second initialize() in parallel
+ *   4. Both initializers eventually call nvim_buf_set_name with the same
+ *      title. The second one may finish first (or fail), leaving a named-but-
+ *      empty orphan buffer that the first run then can't name correctly.
+ *
+ * The fix: if a route is already in flight for a given key (target + args),
+ * the duplicate invocation is dropped and logged.
+ */
+const inFlightRoutes = new Set<string>()
 
 /**
  * Handle route command - navigate to a specific view
@@ -130,8 +166,27 @@ export async function handleRoute(
     return
   }
 
+  logger.info('handleRoute: start', { target, args })
+
+  // Fix 2: Deduplicate concurrent route calls for the same view+args.
+  // Use target + serialised args as the key so that parameterised views
+  // (e.g. dynamo_db_table with different table names) are treated as distinct.
+  const routeKey = `${target}:${args.join(',')}`
+
+  if (inFlightRoutes.has(routeKey)) {
+    logger.warn('handleRoute: duplicate route already in flight, dropping', {
+      target,
+      args,
+      routeKey,
+    })
+    return
+  }
+
+  inFlightRoutes.add(routeKey)
+
   try {
-    // Use the current window
+    // Use the current window — captured once here so that the window handle
+    // passed to initialize() is consistent for the duration of this call.
     const window = await nvim.window
 
     // Check if a buffer for this view already exists and reuse it
@@ -140,19 +195,98 @@ export async function handleRoute(
     const existingBuf = await findExistingBuffer(nvim, expectedName)
 
     if (existingBuf !== null) {
-      // Switch to the existing buffer — let Neovim handle it
-      await nvim.call('nvim_win_set_buf', [window.id, existingBuf])
-      viewRegistry.setCurrentView(target)
-      return
+      // Inspect line count before reuse — a count of 0 means the buffer was
+      // previously created but never populated (orphaned by a prior failed or
+      // interrupted initialize()). Treat it as if it doesn't exist: wipe it
+      // and fall through to a fresh initialize().
+      const lineCount: number = await nvim.call('nvim_buf_line_count', [
+        existingBuf,
+      ])
+
+      logger.info('handleRoute: found existing buffer', {
+        target,
+        expectedName,
+        bufnr: existingBuf,
+        lineCount,
+      })
+
+      // Fix 3: Wipe empty orphan buffers instead of displaying them.
+      if (lineCount === 0) {
+        logger.warn(
+          'handleRoute: existing buffer is EMPTY — wiping and re-initializing',
+          { target, expectedName, bufnr: existingBuf }
+        )
+        // force:true so the wipe succeeds even if the buffer is displayed
+        // somewhere; Neovim will substitute a new empty buffer in its place.
+        await nvim.call('nvim_buf_delete', [existingBuf, { force: true }])
+      } else {
+        // Buffer is healthy — reuse it.
+        logger.info('handleRoute: reusing existing buffer', {
+          target,
+          expectedName,
+          bufnr: existingBuf,
+          lineCount,
+        })
+        await nvim.call('nvim_win_set_buf', [window.id, existingBuf])
+        viewRegistry.setCurrentView(target)
+        return
+      }
     }
 
-    // No existing buffer — initialize the view (creates a new buffer)
-    await viewEntry.initialize(plugin, window, args)
+    // No existing buffer (or the orphan was just wiped) — initialize the view.
+    logger.info('handleRoute: initializing view', {
+      target,
+      expectedName,
+      args,
+    })
+
+    // Fix 1: Track the buffer created during initialize() so that if the call
+    // throws after nvim_buf_set_name but before nvim_win_set_buf we can clean
+    // up the orphan.  We do this by listing buffers before and after the call
+    // and deleting any newly named plugin buffer that wasn't set in the window.
+    const bufsBeforeInit: number[] = await nvim.call('nvim_list_bufs', [])
+
+    try {
+      await viewEntry.initialize(plugin, window, args)
+      logger.info('handleRoute: view initialized successfully', { target })
+    } catch (initError) {
+      // Fix 1: initialize() threw — find and delete any buffer it may have
+      // created and named before the error, so it can't become an orphan.
+      logger.error('handleRoute: initialize() threw, cleaning up orphans', {
+        target,
+        error: String(initError),
+      })
+
+      const bufsAfterInit: number[] = await nvim.call('nvim_list_bufs', [])
+      const newBufs = bufsAfterInit.filter((b) => !bufsBeforeInit.includes(b))
+
+      for (const orphanBuf of newBufs) {
+        const name: string = await nvim.call('nvim_buf_get_name', [orphanBuf])
+        // Only wipe buffers this plugin created (name starts with "nvim-aws |")
+        if (name.includes('nvim-aws |')) {
+          logger.warn('handleRoute: deleting orphan buffer', {
+            bufnr: orphanBuf,
+            name,
+          })
+          await nvim.call('nvim_buf_delete', [orphanBuf, { force: true }])
+        }
+      }
+
+      await nvim.errWrite(`Error routing to ${target}: ${String(initError)}\n`)
+      return
+    }
 
     // Set this as the current view
     viewRegistry.setCurrentView(target)
   } catch (error) {
+    logger.error('handleRoute: caught unexpected error', {
+      target,
+      error: String(error),
+    })
     await nvim.errWrite(`Error routing to ${target}: ${String(error)}\n`)
+  } finally {
+    // Always release the in-flight lock, even on error.
+    inFlightRoutes.delete(routeKey)
   }
 }
 
@@ -184,10 +318,15 @@ export async function handleAction(
 ): Promise<void> {
   const nvim = plugin.nvim
 
+  logger.debug('handleAction: start', { target, args })
+
   // Detect the current view based on buffer filetype
   const currentView = await detectCurrentView(nvim)
 
+  logger.debug('handleAction: detected view', { target, currentView })
+
   if (!currentView) {
+    logger.warn('handleAction: no current view detected', { target })
     await nvim.errWrite(
       'No current view. Use "route" to navigate to a view first.\n'
     )
@@ -196,6 +335,10 @@ export async function handleAction(
 
   const viewEntry = viewRegistry.get(currentView)
   if (!viewEntry || !viewEntry.actions) {
+    logger.warn('handleAction: no actions available for view', {
+      target,
+      currentView,
+    })
     await nvim.errWrite(
       `No actions available for current view: ${currentView}\n`
     )
@@ -205,15 +348,28 @@ export async function handleAction(
   const action = viewEntry.actions[target]
   if (!action) {
     const availableActions = Object.keys(viewEntry.actions).join(', ')
+    logger.warn('handleAction: unknown action', {
+      target,
+      currentView,
+      availableActions,
+    })
     await nvim.errWrite(
       `Unknown action: ${target}. Available actions: ${availableActions}\n`
     )
     return
   }
 
+  logger.info('handleAction: executing action', { currentView, target, args })
+
   try {
     await action(plugin, args)
+    logger.info('handleAction: action completed', { currentView, target })
   } catch (error) {
+    logger.error('handleAction: caught error', {
+      currentView,
+      target,
+      error: String(error),
+    })
     await nvim.errWrite(`Error executing action ${target}: ${String(error)}\n`)
   }
 }

@@ -8,6 +8,7 @@ import { initializeDDBQueryCommands, submitDDBQuery } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
 import { getBufferTitle } from '../../../session/index'
+import { logger } from '../../../utils/logger'
 
 // Module-level state: current table description used by submit action
 let currentTableDescription: TableDescription | null = null
@@ -82,9 +83,13 @@ export async function initializeDDBQueryView(
 
   const tableName = args[0]!
 
+  logger.info('initializeDDBQueryView: start', { tableName })
+
   try {
     const tableDesc = await describeTable(tableName)
     currentTableDescription = tableDesc
+
+    logger.debug('initializeDDBQueryView: table described', { tableName })
 
     const lines = buildFormLines(tableDesc)
 
@@ -105,10 +110,23 @@ export async function initializeDDBQueryView(
     const bufferTitle = getBufferTitle(`DynamoDB Query: ${tableName}`)
     await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
+    logger.debug('initializeDDBQueryView: setting buffer in window', {
+      bufnr: buffer.id,
+      windowId: window.id,
+      bufferTitle,
+    })
     await nvim.call('nvim_win_set_buf', [window.id, buffer])
+    logger.info('initializeDDBQueryView: buffer set in window', {
+      bufnr: buffer.id,
+      lineCount: lines.length,
+    })
 
     await initializeDDBQueryCommands(plugin, buffer)
   } catch (error) {
+    logger.error('initializeDDBQueryView: caught error', {
+      tableName,
+      error: String(error),
+    })
     await nvim.errWrite(
       `Error loading table schema for ${tableName}: ${String(error)}\n`
     )

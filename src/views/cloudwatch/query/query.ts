@@ -5,6 +5,7 @@ import { initializeCWQueryCommands, submitCWQuery } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
 import { getBufferTitle } from '../../../session/index'
+import { logger } from '../../../utils/logger'
 
 // ---------------------------------------------------------------------------
 // Module-level state
@@ -98,10 +99,16 @@ export async function initializeCWQueryView(
 ): Promise<void> {
   const nvim = plugin.nvim
 
+  logger.info('initializeCWQueryView: start', {})
+
   try {
     await nvim.outWrite('Loading CloudWatch log groups...\n')
     const logGroups = await listLogGroups()
     cachedLogGroups = logGroups
+
+    logger.debug('initializeCWQueryView: log groups fetched', {
+      logGroupCount: logGroups.length,
+    })
 
     const lines = buildQueryFormLines(logGroups)
 
@@ -121,10 +128,22 @@ export async function initializeCWQueryView(
     const bufferTitle = getBufferTitle('CloudWatch Logs Insights')
     await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
+    logger.debug('initializeCWQueryView: setting buffer in window', {
+      bufnr: buffer.id,
+      windowId: window.id,
+      bufferTitle,
+    })
     await nvim.call('nvim_win_set_buf', [window.id, buffer])
+    logger.info('initializeCWQueryView: buffer set in window', {
+      bufnr: buffer.id,
+      lineCount: lines.length,
+    })
 
     await initializeCWQueryCommands(plugin, buffer)
   } catch (error) {
+    logger.error('initializeCWQueryView: caught error', {
+      error: String(error),
+    })
     await nvim.errWrite(
       `Error loading CloudWatch log groups: ${String(error)}\n`
     )

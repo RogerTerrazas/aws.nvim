@@ -12,6 +12,7 @@ import { initializeDDBQueryResultsCommands } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
 import { getBufferTitle } from '../../../session/index'
+import { logger } from '../../../utils/logger'
 
 // ---------------------------------------------------------------------------
 // Header builders
@@ -154,6 +155,12 @@ export async function initializeDDBQueryResultsView(
     filterValuesJson ?? ''
   )
 
+  logger.info('initializeDDBQueryResultsView: start', {
+    mode,
+    tableName,
+    limit,
+  })
+
   try {
     let items: DynamoDBItem[]
     let headerLines: string[]
@@ -199,6 +206,12 @@ export async function initializeDDBQueryResultsView(
       headerLines = buildQueryHeader(params, items.length)
     }
 
+    logger.debug('initializeDDBQueryResultsView: query complete', {
+      mode,
+      tableName,
+      itemCount: items.length,
+    })
+
     const lines: string[] = [...headerLines, ...renderItems(items)]
 
     const buffer = (await nvim.createBuffer(false, true)) as Buffer
@@ -222,10 +235,24 @@ export async function initializeDDBQueryResultsView(
     const bufferTitle = getBufferTitle(resultLabel)
     await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
+    logger.debug('initializeDDBQueryResultsView: setting buffer in window', {
+      bufnr: buffer.id,
+      windowId: window.id,
+      bufferTitle,
+    })
     await nvim.call('nvim_win_set_buf', [window.id, buffer])
+    logger.info('initializeDDBQueryResultsView: buffer set in window', {
+      bufnr: buffer.id,
+      lineCount: lines.length,
+    })
 
     await initializeDDBQueryResultsCommands(plugin, buffer)
   } catch (error) {
+    logger.error('initializeDDBQueryResultsView: caught error', {
+      mode,
+      tableName,
+      error: String(error),
+    })
     await nvim.errWrite(`Error executing query: ${String(error)}\n`)
   }
 }

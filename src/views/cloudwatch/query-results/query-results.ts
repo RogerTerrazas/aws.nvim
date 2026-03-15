@@ -9,6 +9,7 @@ import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
 import { getBufferTitle } from '../../../session/index'
 import { QueryStatus } from '@aws-sdk/client-cloudwatch-logs'
+import { logger } from '../../../utils/logger'
 
 // ---------------------------------------------------------------------------
 // Module-level state (for the refresh action)
@@ -136,6 +137,14 @@ export async function initializeCWQueryResultsView(
 
   lastQueryParams = params
 
+  logger.info('initializeCWQueryResultsView: start', {
+    logGroupCount: logGroupNames.length,
+    queryString: queryString.split('\n')[0],
+    startTime,
+    endTime,
+    limit,
+  })
+
   // Create the buffer immediately with a "Running..." placeholder
   const buffer = (await nvim.createBuffer(false, true)) as Buffer
 
@@ -163,14 +172,41 @@ export async function initializeCWQueryResultsView(
   const bufferTitle = getBufferTitle('CloudWatch Logs Insights — Results')
   await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
+  logger.debug(
+    'initializeCWQueryResultsView: placeholder shown, setting buffer in window',
+    {
+      bufnr: buffer.id,
+      windowId: window.id,
+      bufferTitle,
+    }
+  )
   await nvim.call('nvim_win_set_buf', [window.id, buffer])
+  logger.info(
+    'initializeCWQueryResultsView: placeholder buffer set in window',
+    {
+      bufnr: buffer.id,
+    }
+  )
 
   // Register keymaps before the async query so they're ready immediately
   await initializeCWQueryResultsCommands(plugin, buffer)
 
   // Run the query and update the buffer
+  logger.info('initializeCWQueryResultsView: starting async query', {
+    bufnr: buffer.id,
+  })
+
   try {
     const response = await runInsightsQuery(params)
+
+    logger.info(
+      'initializeCWQueryResultsView: query complete, updating buffer',
+      {
+        bufnr: buffer.id,
+        resultCount: response.results.length,
+        status: response.status,
+      }
+    )
 
     const headerLines = buildResultsHeader(
       params,
@@ -201,7 +237,16 @@ export async function initializeCWQueryResultsView(
     await nvim.call('nvim_buf_set_option', [buffer, 'modifiable', true])
     await nvim.call('nvim_buf_set_lines', [buffer, 0, -1, false, allLines])
     await nvim.call('nvim_buf_set_option', [buffer, 'modifiable', false])
+
+    logger.info('initializeCWQueryResultsView: buffer updated with results', {
+      bufnr: buffer.id,
+      lineCount: allLines.length,
+    })
   } catch (error) {
+    logger.error('initializeCWQueryResultsView: query failed', {
+      bufnr: buffer.id,
+      error: String(error),
+    })
     const errorLines = [
       'Error running CloudWatch Logs Insights query:',
       String(error),

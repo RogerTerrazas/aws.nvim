@@ -3,6 +3,7 @@ import { getActiveProfile, getBufferTitle } from '../../session/index'
 import { initializeHomeCommands, selectHomeEntry } from './commands'
 import type { ViewRegistryEntry } from '../../types'
 import { VIEW_TO_FILETYPE } from '../../types'
+import { logger } from '../../utils/logger'
 
 // ─── Layout helpers ──────────────────────────────────────────────────────────
 
@@ -103,6 +104,10 @@ export async function initializeHomeView(
 
   const lines = buildHomeLines()
 
+  logger.debug('initializeHomeView: creating buffer', {
+    lineCount: lines.length,
+  })
+
   const buffer = (await nvim.createBuffer(false, true)) as Buffer
 
   await nvim.call('nvim_buf_set_option', [buffer, 'buftype', 'nofile'])
@@ -119,7 +124,16 @@ export async function initializeHomeView(
   const bufferTitle = getBufferTitle('Home')
   await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
+  logger.debug('initializeHomeView: setting buffer in window', {
+    bufnr: buffer.id,
+    windowId: window.id,
+    bufferTitle,
+  })
   await nvim.call('nvim_win_set_buf', [window.id, buffer])
+  logger.info('initializeHomeView: buffer set in window', {
+    bufnr: buffer.id,
+    lineCount: lines.length,
+  })
 
   await initializeHomeCommands(plugin, buffer)
 }

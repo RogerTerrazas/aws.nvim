@@ -4,6 +4,7 @@ import { initializeDDBTableCommands } from './commands'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
 import { getBufferTitle } from '../../../session/index'
+import { logger } from '../../../utils/logger'
 
 /**
  * Store the current table name for the view
@@ -35,9 +36,16 @@ export async function initializeDDBTableView(
 
   currentTableName = tableName
 
+  logger.info('initializeDDBTableView: start', { tableName })
+
   try {
     // Scan the table for first 50 items
     const items = await scanDynamoDBTable(tableName, 50)
+
+    logger.debug('initializeDDBTableView: scan complete', {
+      tableName,
+      itemCount: items.length,
+    })
 
     // Format items as JSON lines
     const lines: string[] = []
@@ -80,11 +88,24 @@ export async function initializeDDBTableView(
     await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
     // Set the buffer to the window
+    logger.debug('initializeDDBTableView: setting buffer in window', {
+      bufnr: buffer.id,
+      windowId: window.id,
+      bufferTitle,
+    })
     await nvim.call('nvim_win_set_buf', [window.id, buffer])
+    logger.info('initializeDDBTableView: buffer set in window', {
+      bufnr: buffer.id,
+      lineCount: lines.length,
+    })
 
     // Setup keybindings for the table view
     await initializeDDBTableCommands(plugin, buffer)
   } catch (error) {
+    logger.error('initializeDDBTableView: caught error', {
+      tableName,
+      error: String(error),
+    })
     await nvim.errWrite(`Error loading table ${tableName}: ${String(error)}\n`)
   }
 }

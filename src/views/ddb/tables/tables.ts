@@ -9,6 +9,7 @@ import {
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
 import { getBufferTitle } from '../../../session/index'
+import { logger } from '../../../utils/logger'
 
 export async function initializeDDBTablesView(
   plugin: NvimPlugin,
@@ -22,6 +23,14 @@ export async function initializeDDBTablesView(
 
   // Format as a clean list (one table per line)
   const lines: string[] = tableNames || []
+
+  if (lines.length === 0) {
+    logger.warn('initializeDDBTablesView: no tables returned from AWS', {})
+  } else {
+    logger.debug('initializeDDBTablesView: tables fetched', {
+      tableCount: lines.length,
+    })
+  }
 
   // TODO: Create mapped model based on response
 
@@ -46,7 +55,16 @@ export async function initializeDDBTablesView(
   await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
   // Set the buffer to the window
+  logger.debug('initializeDDBTablesView: setting buffer in window', {
+    bufnr: buffer.id,
+    windowId: window.id,
+    bufferTitle,
+  })
   await nvim.call('nvim_win_set_buf', [window.id, buffer])
+  logger.info('initializeDDBTablesView: buffer set in window', {
+    bufnr: buffer.id,
+    lineCount: lines.length,
+  })
 
   // Setup keybindings for the tables view
   await initializeDDBTablesCommands(plugin, buffer)

@@ -147,8 +147,10 @@ describe('queryDynamoDBTable', () => {
         sortKeyType: 'N',
       })
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const input = ddbMock.commandCalls(QueryCommand)[0]?.args[0].input
+      const calls = ddbMock.commandCalls(QueryCommand)
+      expect(calls).toHaveLength(1)
+      // biome-ignore lint/style/noNonNullAssertion: length asserted above
+      const input = calls[0]!.args[0].input
       expect(input.KeyConditionExpression).toBe(
         '#pk = :pk AND #sk BETWEEN :sk1 AND :sk2'
       )

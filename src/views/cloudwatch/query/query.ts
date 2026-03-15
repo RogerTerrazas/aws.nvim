@@ -139,6 +139,10 @@ export async function initializeCWQueryView(
       lineCount: lines.length,
     })
 
+    await nvim.outWrite(
+      `Loaded ${logGroups.length} CloudWatch log group${logGroups.length === 1 ? '' : 's'}.\n`
+    )
+
     await initializeCWQueryCommands(plugin, buffer)
   } catch (error) {
     logger.error('initializeCWQueryView: caught error', {

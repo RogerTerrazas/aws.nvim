@@ -54,7 +54,7 @@ describe('initializeCWQueryResultsView', () => {
       await vi.runAllTimersAsync()
       await promise
 
-      expect(plugin.nvim.createBuffer).toHaveBeenCalledWith(false, true)
+      expect(plugin.nvim.createBuffer).toHaveBeenCalledWith(true, true)
 
       const calls: Array<unknown[]> = (
         plugin.nvim.call as ReturnType<typeof vi.fn>

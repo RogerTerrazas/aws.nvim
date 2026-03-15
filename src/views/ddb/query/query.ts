@@ -93,7 +93,7 @@ export async function initializeDDBQueryView(
 
     const lines = buildFormLines(tableDesc)
 
-    const buffer = (await nvim.createBuffer(false, true)) as Buffer
+    const buffer = (await nvim.createBuffer(true, true)) as Buffer
 
     await nvim.call('nvim_buf_set_option', [buffer, 'buftype', 'nofile'])
     await nvim.call('nvim_buf_set_option', [buffer, 'bufhidden', 'hide'])

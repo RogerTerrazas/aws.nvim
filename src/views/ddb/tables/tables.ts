@@ -35,7 +35,7 @@ export async function initializeDDBTablesView(
   // TODO: Create mapped model based on response
 
   // Initialize view
-  const buffer = (await nvim.createBuffer(false, true)) as Buffer
+  const buffer = (await nvim.createBuffer(true, true)) as Buffer
 
   // Set buffer options
   await nvim.call('nvim_buf_set_option', [buffer, 'buftype', 'nofile'])

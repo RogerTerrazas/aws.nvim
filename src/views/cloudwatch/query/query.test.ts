@@ -80,7 +80,7 @@ describe('initializeCWQueryView', () => {
 
       await initializeCWQueryView(plugin, window)
 
-      expect(plugin.nvim.createBuffer).toHaveBeenCalledWith(false, true)
+      expect(plugin.nvim.createBuffer).toHaveBeenCalledWith(true, true)
 
       // Buffer must NOT have modifiable set to false (user needs to edit it)
       const calls: Array<unknown[]> = (

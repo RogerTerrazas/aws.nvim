@@ -56,7 +56,7 @@ describe('initializeDDBQueryView', () => {
 
       await initializeDDBQueryView(plugin, window, ['orders-table'])
 
-      expect(plugin.nvim.createBuffer).toHaveBeenCalledWith(false, true)
+      expect(plugin.nvim.createBuffer).toHaveBeenCalledWith(true, true)
 
       // Buffer should NOT have modifiable set to false (it stays editable)
       const calls: Array<unknown[]> = (

@@ -41,7 +41,7 @@ describe('initializeDDBTablesView', () => {
       await initializeDDBTablesView(mockPlugin, mockWindow)
 
       // Assert
-      expect(mockPlugin.nvim.createBuffer).toHaveBeenCalledWith(false, true)
+      expect(mockPlugin.nvim.createBuffer).toHaveBeenCalledWith(true, true)
       expect(mockPlugin.nvim.call).toHaveBeenCalled()
     })
   })

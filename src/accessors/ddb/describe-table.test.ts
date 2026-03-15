@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { mockClient } from 'aws-sdk-client-mock'
 import {
-  DynamoDBClient,
   DescribeTableCommand,
-  ScalarAttributeType,
+  DynamoDBClient,
   KeyType,
+  ScalarAttributeType,
 } from '@aws-sdk/client-dynamodb'
+import { mockClient } from 'aws-sdk-client-mock'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { describeTable } from './describe-table'
 
 const ddbMock = mockClient(DynamoDBClient)

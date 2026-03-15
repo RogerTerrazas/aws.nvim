@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mockClient } from 'aws-sdk-client-mock'
 import {
   CloudWatchLogsClient,
-  StartQueryCommand,
   GetQueryResultsCommand,
   QueryStatus,
+  StartQueryCommand,
 } from '@aws-sdk/client-cloudwatch-logs'
-import { initializeCWQueryResultsView } from './query-results.js'
+import { mockClient } from 'aws-sdk-client-mock'
 import type { NvimPlugin, Window } from 'neovim'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { initializeCWQueryResultsView } from './query-results.js'
 
 vi.useFakeTimers()
 

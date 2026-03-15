@@ -1,20 +1,20 @@
 import type { Buffer, NvimPlugin, Window } from 'neovim'
 import { listDynamoDBTables } from '../../../accessors/ddb/tables'
-import {
-  initializeDDBTablesCommands,
-  selectDDBTable,
-  queryDDBTable,
-  openAccountSwitcher,
-} from './commands'
+import { getBufferTitle } from '../../../session/index'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
-import { getBufferTitle } from '../../../session/index'
 import { logger } from '../../../utils/logger'
+import {
+  initializeDDBTablesCommands,
+  openAccountSwitcher,
+  queryDDBTable,
+  selectDDBTable,
+} from './commands'
 
 export async function initializeDDBTablesView(
   plugin: NvimPlugin,
   window: Window,
-  args?: string[]
+  _args?: string[]
 ): Promise<void> {
   const nvim = plugin.nvim
 
@@ -43,7 +43,7 @@ export async function initializeDDBTablesView(
   await nvim.call('nvim_buf_set_option', [
     buffer,
     'filetype',
-    VIEW_TO_FILETYPE['dynamo_db_tables'],
+    VIEW_TO_FILETYPE.dynamo_db_tables,
   ])
 
   // Set content then make read-only

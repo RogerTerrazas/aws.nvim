@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { mockClient } from 'aws-sdk-client-mock'
 import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'
+import { mockClient } from 'aws-sdk-client-mock'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { queryDynamoDBTable } from './query'
 
 const ddbMock = mockClient(DynamoDBClient)
@@ -148,7 +148,7 @@ describe('queryDynamoDBTable', () => {
       })
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const input = ddbMock.commandCalls(QueryCommand)[0]!.args[0].input
+      const input = ddbMock.commandCalls(QueryCommand)[0]?.args[0].input
       expect(input.KeyConditionExpression).toBe(
         '#pk = :pk AND #sk BETWEEN :sk1 AND :sk2'
       )

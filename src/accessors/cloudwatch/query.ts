@@ -1,9 +1,9 @@
 import {
-  StartQueryCommand,
   GetQueryResultsCommand,
-  type ResultField,
   type QueryStatistics,
   QueryStatus,
+  type ResultField,
+  StartQueryCommand,
 } from '@aws-sdk/client-cloudwatch-logs'
 import { createCloudWatchLogsClient } from '../../session/index'
 

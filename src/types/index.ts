@@ -1,10 +1,8 @@
 // Type definitions for nvim-aws plugin
 
-import { NvimPlugin, Window } from 'neovim'
+import type { NvimPlugin, Window } from 'neovim'
 
-export interface PluginConfig {
-  // Future configuration options
-}
+export type PluginConfig = Record<string, never>
 
 export interface WindowState {
   bufnr: number | null

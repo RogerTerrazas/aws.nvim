@@ -1,15 +1,15 @@
+import { QueryStatus } from '@aws-sdk/client-cloudwatch-logs'
 import type { Buffer, NvimPlugin, Window } from 'neovim'
 import {
-  runInsightsQuery,
   type InsightsQueryParams,
   type InsightsResult,
+  runInsightsQuery,
 } from '../../../accessors/cloudwatch/query'
-import { initializeCWQueryResultsCommands, refreshCWQuery } from './commands'
+import { getBufferTitle } from '../../../session/index'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
-import { getBufferTitle } from '../../../session/index'
-import { QueryStatus } from '@aws-sdk/client-cloudwatch-logs'
 import { logger } from '../../../utils/logger'
+import { initializeCWQueryResultsCommands, refreshCWQuery } from './commands'
 
 // ---------------------------------------------------------------------------
 // Module-level state (for the refresh action)
@@ -40,7 +40,7 @@ function buildResultsHeader(
 ): string[] {
   const logGroupsDisplay =
     params.logGroupNames.length === 1
-      ? params.logGroupNames[0]!
+      ? (params.logGroupNames[0] ?? '')
       : `${params.logGroupNames[0]} (+${params.logGroupNames.length - 1} more)`
 
   const startDisplay = formatTimestamp(params.startTime)
@@ -116,16 +116,16 @@ export async function initializeCWQueryResultsView(
 
   let logGroupNames: string[]
   try {
-    logGroupNames = JSON.parse(args[0]!) as string[]
+    logGroupNames = JSON.parse(args[0] ?? '') as string[]
   } catch {
     await nvim.errWrite('Failed to parse log group names.\n')
     return
   }
 
-  const queryString = args[1]!
-  const startTime = parseInt(args[2]!, 10)
-  const endTime = parseInt(args[3]!, 10)
-  const limit = parseInt(args[4]!, 10)
+  const queryString = args[1] ?? ''
+  const startTime = parseInt(args[2] ?? '', 10)
+  const endTime = parseInt(args[3] ?? '', 10)
+  const limit = parseInt(args[4] ?? '', 10)
 
   const params: InsightsQueryParams = {
     logGroupNames,
@@ -153,7 +153,7 @@ export async function initializeCWQueryResultsView(
   await nvim.call('nvim_buf_set_option', [
     buffer,
     'filetype',
-    VIEW_TO_FILETYPE['cloudwatch_query_results'],
+    VIEW_TO_FILETYPE.cloudwatch_query_results,
   ])
 
   const placeholderLines = [

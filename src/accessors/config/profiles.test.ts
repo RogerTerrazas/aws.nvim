@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseAwsConfigContent, parseAwsConfig } from './profiles.js'
+import { describe, expect, it } from 'vitest'
+import { parseAwsConfig, parseAwsConfigContent } from './profiles.js'
 
 describe('parseAwsConfigContent', () => {
   describe('profile extraction', () => {

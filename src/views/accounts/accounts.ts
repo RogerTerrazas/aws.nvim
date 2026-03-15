@@ -1,12 +1,11 @@
 import type { Buffer, NvimPlugin, Window } from 'neovim'
-import { parseAwsConfig } from '../../accessors/config/profiles'
 import type { AwsProfile } from '../../accessors/config/profiles'
-import { getActiveProfile } from '../../session/index'
-import { getBufferTitle } from '../../session/index'
-import { initializeAccountsCommands, selectAccount } from './commands'
+import { parseAwsConfig } from '../../accessors/config/profiles'
+import { getActiveProfile, getBufferTitle } from '../../session/index'
 import type { ViewRegistryEntry } from '../../types'
 import { VIEW_TO_FILETYPE } from '../../types'
 import { logger } from '../../utils/logger'
+import { initializeAccountsCommands, selectAccount } from './commands'
 
 /**
  * Format a single profile line for the accounts buffer.
@@ -32,7 +31,7 @@ export function formatProfileLine(
 export async function initializeAccountsView(
   plugin: NvimPlugin,
   window: Window,
-  args?: string[]
+  _args?: string[]
 ): Promise<void> {
   const nvim = plugin.nvim
 
@@ -68,7 +67,7 @@ export async function initializeAccountsView(
   await nvim.call('nvim_buf_set_option', [
     buffer,
     'filetype',
-    VIEW_TO_FILETYPE['aws_accounts'],
+    VIEW_TO_FILETYPE.aws_accounts,
   ])
 
   await nvim.call('nvim_buf_set_lines', [buffer, 0, -1, false, lines])

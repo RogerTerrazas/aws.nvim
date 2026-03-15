@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { mockClient } from 'aws-sdk-client-mock'
 import { DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb'
+import { mockClient } from 'aws-sdk-client-mock'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { listDynamoDBTables } from './tables.js'
 
 // Create a mock DynamoDB client

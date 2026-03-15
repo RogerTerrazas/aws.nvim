@@ -1,13 +1,13 @@
-import type { Buffer, NvimPlugin } from 'neovim'
 import type { AttributeValue } from '@aws-sdk/client-dynamodb'
-import { handleRoute } from '../../../router'
-import { getTableDescription } from './query'
+import type { Buffer, NvimPlugin } from 'neovim'
 import type {
   TableDescription,
   TableIndex,
 } from '../../../accessors/ddb/describe-table'
-import type { SkCondition, SkOperator } from '../../../accessors/ddb/query'
 import type { FilterParams } from '../../../accessors/ddb/items'
+import type { SkCondition, SkOperator } from '../../../accessors/ddb/query'
+import { handleRoute } from '../../../router'
+import { getTableDescription } from './query'
 
 // ---------------------------------------------------------------------------
 // SK parsing
@@ -76,7 +76,7 @@ export function parseSkInput(raw: string): SkCondition | null {
  */
 export function inferValueType(value: string): 'S' | 'N' {
   const trimmed = value.trim()
-  if (trimmed !== '' && !isNaN(Number(trimmed))) return 'N'
+  if (trimmed !== '' && !Number.isNaN(Number(trimmed))) return 'N'
   return 'S'
 }
 

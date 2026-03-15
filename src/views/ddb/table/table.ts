@@ -1,10 +1,10 @@
 import type { Buffer, NvimPlugin, Window } from 'neovim'
 import { scanDynamoDBTable } from '../../../accessors/ddb/items'
-import { initializeDDBTableCommands } from './commands'
+import { getBufferTitle } from '../../../session/index'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
-import { getBufferTitle } from '../../../session/index'
 import { logger } from '../../../utils/logger'
+import { initializeDDBTableCommands } from './commands'
 
 /**
  * Store the current table name for the view
@@ -76,7 +76,7 @@ export async function initializeDDBTableView(
     await nvim.call('nvim_buf_set_option', [
       buffer,
       'filetype',
-      VIEW_TO_FILETYPE['dynamo_db_table'],
+      VIEW_TO_FILETYPE.dynamo_db_table,
     ])
 
     // Set content then make read-only

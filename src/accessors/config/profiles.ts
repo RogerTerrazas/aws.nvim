@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { homedir } from 'node:os'
+import { join } from 'node:path'
 
 export interface AwsProfile {
   name: string
@@ -66,7 +66,7 @@ export function parseAwsConfigContent(content: string): AwsProfile[] {
         profiles.push(current)
       }
 
-      const sectionBody = sectionMatch[1]!.trim()
+      const sectionBody = sectionMatch[1]?.trim() ?? ''
 
       if (sectionBody === 'default') {
         current = { name: 'default' }
@@ -88,10 +88,10 @@ export function parseAwsConfigContent(content: string): AwsProfile[] {
     if (current) {
       const kvMatch = keyValueRegex.exec(line)
       if (kvMatch) {
-        const key = kvMatch[1]!
-        const value = kvMatch[2]!.trim()
+        const key = kvMatch[1] ?? ''
+        const value = kvMatch[2]?.trim()
 
-        if (key === 'region') {
+        if (key === 'region' && value !== undefined) {
           current.region = value
         }
       }

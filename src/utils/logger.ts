@@ -1,6 +1,6 @@
 import fs from 'node:fs'
-import path from 'node:path'
 import os from 'node:os'
+import path from 'node:path'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,7 +35,7 @@ class Logger {
     context?: Record<string, unknown>
   ): void {
     const ts = new Date().toISOString()
-    const ctx = context ? ' ' + JSON.stringify(context) : ''
+    const ctx = context ? ` ${JSON.stringify(context)}` : ''
     const line = `[${ts}] [${level.padEnd(5)}] ${message}${ctx}\n`
     try {
       fs.appendFileSync(this.logPath, line, 'utf8')

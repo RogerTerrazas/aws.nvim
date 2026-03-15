@@ -1,14 +1,14 @@
 import type { NvimPlugin } from 'neovim'
 import { router, viewRegistry } from './router'
 import { logger } from './utils/logger'
-import { homeViewEntry } from './views/home/home'
 import { accountsViewEntry } from './views/accounts/accounts'
-import { ddbTablesViewEntry } from './views/ddb/tables/tables'
-import { ddbTableViewEntry } from './views/ddb/table/table'
-import { ddbQueryViewEntry } from './views/ddb/query/query'
-import { ddbQueryResultsViewEntry } from './views/ddb/query-results/query-results'
 import { cwQueryViewEntry } from './views/cloudwatch/query/query'
 import { cwQueryResultsViewEntry } from './views/cloudwatch/query-results/query-results'
+import { ddbQueryViewEntry } from './views/ddb/query/query'
+import { ddbQueryResultsViewEntry } from './views/ddb/query-results/query-results'
+import { ddbTableViewEntry } from './views/ddb/table/table'
+import { ddbTablesViewEntry } from './views/ddb/tables/tables'
+import { homeViewEntry } from './views/home/home'
 
 // Plugin entry point for Neovim remote plugin
 export default function (plugin: NvimPlugin): void {

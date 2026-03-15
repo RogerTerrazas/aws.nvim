@@ -49,5 +49,10 @@
       }
     }
   },
-  "exclude": ["vitest.config.ts", "node_modules", "dist", "chat-context-filter.ts"]
+  "exclude": [
+    "vitest.config.ts",
+    "node_modules",
+    "dist",
+    "chat-context-filter.ts"
+  ]
 }

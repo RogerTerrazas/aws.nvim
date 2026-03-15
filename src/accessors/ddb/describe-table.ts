@@ -1,8 +1,8 @@
-import { DescribeTableCommand } from '@aws-sdk/client-dynamodb'
 import type {
-  KeySchemaElement,
   AttributeDefinition,
+  KeySchemaElement,
 } from '@aws-sdk/client-dynamodb'
+import { DescribeTableCommand } from '@aws-sdk/client-dynamodb'
 import { createDynamoDBClient } from '../../session/index'
 
 export interface TableKeyAttr {
@@ -39,14 +39,14 @@ function resolveKeySchema(
 
   return {
     partitionKey: {
-      name: pk!.AttributeName!,
-      type: attrType(pk!.AttributeName!),
+      name: pk?.AttributeName ?? '',
+      type: attrType(pk?.AttributeName ?? ''),
     },
     ...(sk
       ? {
           sortKey: {
-            name: sk.AttributeName!,
-            type: attrType(sk.AttributeName!),
+            name: sk.AttributeName ?? '',
+            type: attrType(sk.AttributeName ?? ''),
           },
         }
       : {}),
@@ -60,21 +60,25 @@ export async function describeTable(
   const command = new DescribeTableCommand({ TableName: tableName })
   const response = await client.send(command)
 
-  const table = response.Table!
+  const table =
+    response.Table ??
+    (() => {
+      throw new Error('DescribeTable response missing Table')
+    })()
   const attrDefs = table.AttributeDefinitions ?? []
   const keySchema = resolveKeySchema(table.KeySchema ?? [], attrDefs)
 
   const globalSecondaryIndexes: TableIndex[] = (
     table.GlobalSecondaryIndexes ?? []
   ).map((gsi) => ({
-    name: gsi.IndexName!,
+    name: gsi.IndexName ?? '',
     keySchema: resolveKeySchema(gsi.KeySchema ?? [], attrDefs),
   }))
 
   const localSecondaryIndexes: TableIndex[] = (
     table.LocalSecondaryIndexes ?? []
   ).map((lsi) => ({
-    name: lsi.IndexName!,
+    name: lsi.IndexName ?? '',
     keySchema: resolveKeySchema(lsi.KeySchema ?? [], attrDefs),
   }))
 

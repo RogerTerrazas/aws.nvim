@@ -39,12 +39,12 @@ function parseFlexibleDate(raw: string, defaultToEndOfDay = false): Date {
   if (hasTime) {
     return new Date(
       Date.UTC(
-        parseInt(year!),
-        parseInt(month!) - 1,
-        parseInt(day!),
-        parseInt(hour!),
-        parseInt(minute ?? '0'),
-        parseInt(second ?? '0')
+        parseInt(year ?? '', 10),
+        parseInt(month ?? '', 10) - 1,
+        parseInt(day ?? '', 10),
+        parseInt(hour ?? '', 10),
+        parseInt(minute ?? '0', 10),
+        parseInt(second ?? '0', 10)
       )
     )
   }
@@ -52,9 +52,9 @@ function parseFlexibleDate(raw: string, defaultToEndOfDay = false): Date {
   if (defaultToEndOfDay) {
     return new Date(
       Date.UTC(
-        parseInt(year!),
-        parseInt(month!) - 1,
-        parseInt(day!),
+        parseInt(year ?? '', 10),
+        parseInt(month ?? '', 10) - 1,
+        parseInt(day ?? '', 10),
         23,
         59,
         59
@@ -63,7 +63,14 @@ function parseFlexibleDate(raw: string, defaultToEndOfDay = false): Date {
   }
 
   return new Date(
-    Date.UTC(parseInt(year!), parseInt(month!) - 1, parseInt(day!), 0, 0, 0)
+    Date.UTC(
+      parseInt(year ?? '', 10),
+      parseInt(month ?? '', 10) - 1,
+      parseInt(day ?? '', 10),
+      0,
+      0,
+      0
+    )
   )
 }
 
@@ -102,8 +109,8 @@ function parseRelativeTime(timeValue: string): TimeRange {
     )
   }
 
-  const amount = parseInt(match[1]!)
-  const unit = match[2]!
+  const amount = parseInt(match[1] ?? '', 10)
+  const unit = match[2] ?? ''
   const endTime = Math.floor(Date.now() / 1000)
   let offsetSeconds: number
 

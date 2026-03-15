@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { formatProfileLine } from './accounts.js'
+import { describe, expect, it } from 'vitest'
 import type { AwsProfile } from '../../accessors/config/profiles'
+import { formatProfileLine } from './accounts.js'
 
 describe('formatProfileLine', () => {
   it('should format an active profile with region', () => {

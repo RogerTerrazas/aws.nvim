@@ -1,9 +1,9 @@
 import type { Buffer, NvimPlugin, Window } from 'neovim'
 import { getActiveProfile, getBufferTitle } from '../../session/index'
-import { initializeHomeCommands, selectHomeEntry } from './commands'
 import type { ViewRegistryEntry } from '../../types'
 import { VIEW_TO_FILETYPE } from '../../types'
 import { logger } from '../../utils/logger'
+import { initializeHomeCommands, selectHomeEntry } from './commands'
 
 // ─── Layout helpers ──────────────────────────────────────────────────────────
 
@@ -115,7 +115,7 @@ export async function initializeHomeView(
   await nvim.call('nvim_buf_set_option', [
     buffer,
     'filetype',
-    VIEW_TO_FILETYPE['aws_home'],
+    VIEW_TO_FILETYPE.aws_home,
   ])
 
   await nvim.call('nvim_buf_set_lines', [buffer, 0, -1, false, lines])

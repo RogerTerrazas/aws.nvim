@@ -1,14 +1,14 @@
 import type { Buffer, NvimPlugin, Window } from 'neovim'
-import { describeTable } from '../../../accessors/ddb/describe-table'
 import type {
   TableDescription,
   TableIndex,
 } from '../../../accessors/ddb/describe-table'
-import { initializeDDBQueryCommands, submitDDBQuery } from './commands'
+import { describeTable } from '../../../accessors/ddb/describe-table'
+import { getBufferTitle } from '../../../session/index'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
-import { getBufferTitle } from '../../../session/index'
 import { logger } from '../../../utils/logger'
+import { initializeDDBQueryCommands, submitDDBQuery } from './commands'
 
 // Module-level state: current table description used by submit action
 let currentTableDescription: TableDescription | null = null
@@ -81,7 +81,7 @@ export async function initializeDDBQueryView(
     return
   }
 
-  const tableName = args[0]!
+  const tableName = args[0] ?? ''
 
   logger.info('initializeDDBQueryView: start', { tableName })
 
@@ -100,7 +100,7 @@ export async function initializeDDBQueryView(
     await nvim.call('nvim_buf_set_option', [
       buffer,
       'filetype',
-      VIEW_TO_FILETYPE['dynamo_db_query'],
+      VIEW_TO_FILETYPE.dynamo_db_query,
     ])
 
     // Set content — leave modifiable so user can edit field values

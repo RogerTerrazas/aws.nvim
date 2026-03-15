@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { parseSkInput, parseFilterInput, inferValueType } from './commands'
+import { describe, expect, it } from 'vitest'
+import { inferValueType, parseFilterInput, parseSkInput } from './commands'
 
 describe('parseSkInput', () => {
   describe('empty / no-op input', () => {

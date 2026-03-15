@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  getActiveProfile,
-  setActiveProfile,
   clearActiveProfile,
+  getActiveProfile,
   getBufferTitle,
+  setActiveProfile,
 } from './index.js'
 
 describe('session', () => {

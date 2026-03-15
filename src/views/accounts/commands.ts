@@ -1,7 +1,7 @@
 import type { Buffer, NvimPlugin } from 'neovim'
 import { parseAwsConfig } from '../../accessors/config/profiles'
-import { setActiveProfile } from '../../session/index'
 import { handleRoute } from '../../router'
+import { setActiveProfile } from '../../session/index'
 
 /**
  * Parse the profile name from a formatted profile line.
@@ -15,7 +15,7 @@ export function parseProfileNameFromLine(line: string): string {
   const content = line.slice(2)
   // The profile name is the first whitespace-delimited token
   const match = /^(\S+)/.exec(content)
-  return match ? match[1]! : ''
+  return match ? (match[1] ?? '') : ''
 }
 
 /**
@@ -45,7 +45,7 @@ export async function selectAccount(plugin: NvimPlugin): Promise<void> {
     setActiveProfile(profile)
 
     await nvim.command(
-      `echo "Switched to AWS profile: ${profile.name}${profile.region ? ' (' + profile.region + ')' : ''}"`
+      `echo "Switched to AWS profile: ${profile.name}${profile.region ? ` (${profile.region})` : ''}"`
     )
 
     // Navigate to the home view with the new profile

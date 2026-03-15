@@ -1,18 +1,18 @@
-import type { Buffer, NvimPlugin, Window } from 'neovim'
 import type { AttributeValue } from '@aws-sdk/client-dynamodb'
-import { queryDynamoDBTable } from '../../../accessors/ddb/query'
+import type { Buffer, NvimPlugin, Window } from 'neovim'
+import type { DynamoDBItem, FilterParams } from '../../../accessors/ddb/items'
+import { scanDynamoDBTable } from '../../../accessors/ddb/items'
 import type {
   QueryParams,
   SkCondition,
   SkOperator,
 } from '../../../accessors/ddb/query'
-import { scanDynamoDBTable } from '../../../accessors/ddb/items'
-import type { DynamoDBItem, FilterParams } from '../../../accessors/ddb/items'
-import { initializeDDBQueryResultsCommands } from './commands'
+import { queryDynamoDBTable } from '../../../accessors/ddb/query'
+import { getBufferTitle } from '../../../session/index'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
-import { getBufferTitle } from '../../../session/index'
 import { logger } from '../../../utils/logger'
+import { initializeDDBQueryResultsCommands } from './commands'
 
 // ---------------------------------------------------------------------------
 // Header builders
@@ -170,7 +170,7 @@ export async function initializeDDBQueryResultsView(
       items = await scanDynamoDBTable(tableName ?? '', limit, filter)
       headerLines = buildScanHeader(
         tableName ?? '',
-        filter!,
+        filter ?? { expression: '', attributeNames: {}, attributeValues: {} },
         limit,
         items.length
       )
@@ -221,7 +221,7 @@ export async function initializeDDBQueryResultsView(
     await nvim.call('nvim_buf_set_option', [
       buffer,
       'filetype',
-      VIEW_TO_FILETYPE['dynamo_db_query_results'],
+      VIEW_TO_FILETYPE.dynamo_db_query_results,
     ])
 
     await nvim.call('nvim_buf_set_lines', [buffer, 0, -1, false, lines])

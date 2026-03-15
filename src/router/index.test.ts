@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseCommand, router, viewRegistry } from './index'
 import type { NvimPlugin } from 'neovim'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ViewRegistryEntry } from '../types'
+import { parseCommand, router, viewRegistry } from './index'
 
 describe('Router', () => {
   describe('parseCommand', () => {
@@ -62,7 +62,7 @@ describe('Router', () => {
 
   describe('router default behavior', () => {
     let mockPlugin: NvimPlugin
-    let mockInitialize: any
+    let mockInitialize: ReturnType<typeof vi.fn>
 
     beforeEach(() => {
       mockInitialize = vi.fn().mockResolvedValue(undefined)
@@ -85,7 +85,7 @@ describe('Router', () => {
       const testView: ViewRegistryEntry = {
         name: 'aws_home',
         bufferLabel: 'Home',
-        initialize: mockInitialize as any,
+        initialize: mockInitialize as ViewRegistryEntry['initialize'],
         actions: {},
       }
       viewRegistry.register(testView)

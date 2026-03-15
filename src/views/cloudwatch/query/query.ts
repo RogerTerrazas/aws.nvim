@@ -1,11 +1,11 @@
 import type { Buffer, NvimPlugin, Window } from 'neovim'
-import { listLogGroups } from '../../../accessors/cloudwatch/log-groups'
 import type { LogGroup } from '../../../accessors/cloudwatch/log-groups'
-import { initializeCWQueryCommands, submitCWQuery } from './commands'
+import { listLogGroups } from '../../../accessors/cloudwatch/log-groups'
+import { getBufferTitle } from '../../../session/index'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
-import { getBufferTitle } from '../../../session/index'
 import { logger } from '../../../utils/logger'
+import { initializeCWQueryCommands, submitCWQuery } from './commands'
 
 // ---------------------------------------------------------------------------
 // Module-level state
@@ -119,7 +119,7 @@ export async function initializeCWQueryView(
     await nvim.call('nvim_buf_set_option', [
       buffer,
       'filetype',
-      VIEW_TO_FILETYPE['cloudwatch_query'],
+      VIEW_TO_FILETYPE.cloudwatch_query,
     ])
 
     // Leave modifiable so user can edit field values and uncomment log groups

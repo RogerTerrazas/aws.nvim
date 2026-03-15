@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mockClient } from 'aws-sdk-client-mock'
 import {
   CloudWatchLogsClient,
   DescribeLogGroupsCommand,
 } from '@aws-sdk/client-cloudwatch-logs'
-import { initializeCWQueryView, buildQueryFormLines } from './query.js'
+import { mockClient } from 'aws-sdk-client-mock'
 import type { NvimPlugin, Window } from 'neovim'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { buildQueryFormLines, initializeCWQueryView } from './query.js'
 
 const cwMock = mockClient(CloudWatchLogsClient)
 

@@ -1,12 +1,12 @@
-import { NvimPlugin } from 'neovim'
+import type { NvimPlugin } from 'neovim'
+import { getBufferTitle } from '../session/index'
 import type {
-  ViewRegistryEntry,
-  CommandType,
   BufferFiletype,
   BufferLabelResolver,
+  CommandType,
+  ViewRegistryEntry,
 } from '../types'
 import { FILETYPE_TO_VIEW } from '../types'
-import { getBufferTitle } from '../session/index'
 import { logger } from '../utils/logger'
 
 /**
@@ -101,7 +101,7 @@ function resolveBufferLabel(
  * bufnr() performs the same name matching that Neovim itself uses.
  */
 async function findExistingBuffer(
-  nvim: any,
+  nvim: NvimPlugin['nvim'],
   targetName: string
 ): Promise<number | null> {
   // bufnr() returns -1 when no buffer with that name exists
@@ -293,7 +293,9 @@ export async function handleRoute(
 /**
  * Detect the current view based on buffer filetype
  */
-async function detectCurrentView(nvim: any): Promise<string | null> {
+async function detectCurrentView(
+  nvim: NvimPlugin['nvim']
+): Promise<string | null> {
   try {
     const buffer = await nvim.buffer
     const filetype = await nvim.call('nvim_buf_get_option', [
@@ -303,7 +305,7 @@ async function detectCurrentView(nvim: any): Promise<string | null> {
 
     // Map filetype to view name using typed mapping
     return FILETYPE_TO_VIEW[filetype as BufferFiletype] || null
-  } catch (error) {
+  } catch (_error) {
     return null
   }
 }

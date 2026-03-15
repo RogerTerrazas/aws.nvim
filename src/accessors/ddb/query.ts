@@ -1,5 +1,5 @@
-import { QueryCommand } from '@aws-sdk/client-dynamodb'
 import type { AttributeValue } from '@aws-sdk/client-dynamodb'
+import { QueryCommand } from '@aws-sdk/client-dynamodb'
 import { unmarshall } from '@aws-sdk/util-dynamodb'
 import { createDynamoDBClient } from '../../session/index'
 import type { DynamoDBItem, FilterParams } from './items'

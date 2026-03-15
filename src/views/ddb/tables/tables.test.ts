@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mockClient } from 'aws-sdk-client-mock'
 import { DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb'
-import { initializeDDBTablesView } from '../tables/tables'
+import { mockClient } from 'aws-sdk-client-mock'
 import type { NvimPlugin, Window } from 'neovim'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { initializeDDBTablesView } from '../tables/tables'
 
 // Create a mock DynamoDB client
 const ddbMock = mockClient(DynamoDBClient)

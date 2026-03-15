@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
-import { initializeDDBTablesCommands } from './commands'
 import type { Buffer, NvimPlugin } from 'neovim'
+import { describe, expect, it, vi } from 'vitest'
+import { initializeDDBTablesCommands } from './commands'
 
 function createMockPlugin() {
   const mockNvim = {

@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mockClient } from 'aws-sdk-client-mock'
 import {
   CloudWatchLogsClient,
-  StartQueryCommand,
   GetQueryResultsCommand,
   QueryStatus,
+  StartQueryCommand,
 } from '@aws-sdk/client-cloudwatch-logs'
+import { mockClient } from 'aws-sdk-client-mock'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  startInsightsQuery,
   pollQueryResults,
   runInsightsQuery,
+  startInsightsQuery,
 } from './query.js'
 
 // Mock setTimeout so polling tests don't actually wait

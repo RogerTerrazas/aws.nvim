@@ -1,5 +1,5 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { CloudWatchLogsClient } from '@aws-sdk/client-cloudwatch-logs'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { fromIni } from '@aws-sdk/credential-providers'
 import type { AwsProfile } from '../accessors/config/profiles'
 

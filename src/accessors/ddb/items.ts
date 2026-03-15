@@ -1,10 +1,10 @@
-import { ScanCommand } from '@aws-sdk/client-dynamodb'
 import type { AttributeValue } from '@aws-sdk/client-dynamodb'
+import { ScanCommand } from '@aws-sdk/client-dynamodb'
 import { unmarshall } from '@aws-sdk/util-dynamodb'
 import { createDynamoDBClient } from '../../session/index'
 
 export interface DynamoDBItem {
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface FilterParams {

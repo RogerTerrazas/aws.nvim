@@ -11,7 +11,7 @@ as a terminal interface with keyboard-driven navigation
 
 ## Demo
 
-<!-- TODO: add a GIF or screenshot here -->
+![demo](https://github.com/user-attachments/assets/ca0b151b-5dc0-48ed-a8b3-143c41997a58)
 
 ## Features
 

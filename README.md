@@ -10,8 +10,7 @@ as a terminal interface with keyboard-driven navigation
 > See [Installation](#installation) for details.
 
 ## Demo
-
-![demo](https://github.com/user-attachments/assets/ca0b151b-5dc0-48ed-a8b3-143c41997a58)
+![demo](https://github.com/user-attachments/assets/40a088fd-a44d-46fb-a51b-440c4c341aeb)
 
 ## Features
 

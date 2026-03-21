@@ -37,6 +37,7 @@ local function check_dist(root)
     vim.health.error(
       '`dist/index.js` not found — the plugin has not been built',
       'Run the following in the plugin directory:\n'
+        .. '  npm install -g neovim\n'
         .. '  npm install && npm run build\n'
         .. 'Then run :UpdateRemotePlugins and restart Neovim.'
     )
@@ -52,8 +53,9 @@ local function check_node_modules(root)
   else
     vim.health.warn(
       '`neovim` npm package not found in node_modules/',
-      'Run `npm install` in the plugin directory:\n'
-        .. '  cd ' .. root .. ' && npm install'
+      'Run the following in the plugin directory:\n'
+        .. '  cd ' .. root .. ' && npm install -g neovim && npm install\n'
+        .. 'Then restart Neovim.'
     )
     return false
   end
@@ -72,12 +74,14 @@ local function check_rplugin_manifest()
     end
     vim.health.warn(
       '`NvimAws` command not found in remote-plugin manifest',
-      'Run :UpdateRemotePlugins and restart Neovim.'
+      'Run :UpdateRemotePlugins and restart Neovim.\n'
+        .. 'If this is a first install, a restart is required for the manifest to take effect.'
     )
   else
     vim.health.warn(
       'Remote-plugin manifest not found',
-      'Run :UpdateRemotePlugins and restart Neovim.'
+      'Run :UpdateRemotePlugins and restart Neovim.\n'
+        .. 'If this is a first install, a restart is required for the manifest to take effect.'
     )
   end
   return false

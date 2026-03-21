@@ -26,11 +26,12 @@ as a terminal interface with keyboard-driven navigation
 
 ## Requirements
 
-| Requirement | Version |
-| ----------- | ------- |
-| Neovim      | ≥ 0.9   |
-| Node.js     | ≥ 16    |
-| npm         | any     |
+| Requirement      | Version |
+| ---------------- | ------- |
+| Neovim           | ≥ 0.9   |
+| Node.js          | ≥ 16    |
+| npm              | any     |
+| neovim (npm pkg) | any     |
 
 **AWS credentials** must be configured in `~/.aws/config` (the same profiles
 you use with the AWS CLI). The plugin reads credentials and region from
@@ -46,7 +47,7 @@ Run `:checkhealth aws` after installing to verify all requirements are met.
 ```lua
 {
   'rogerterrazas/aws.nvim',
-  build = { 'npm install && npm run build', ':UpdateRemotePlugins' },
+  build = { 'npm install -g neovim && npm install && npm run build', ':UpdateRemotePlugins' },
 }
 ```
 
@@ -59,11 +60,11 @@ Run `:checkhealth aws` after installing to verify all requirements are met.
 ```lua
 use {
   'rogerterrazas/aws.nvim',
-  run = 'npm install && npm run build',
+  run = 'npm install -g neovim && npm install && npm run build',
 }
 ```
 
-After installing, run `:UpdateRemotePlugins` and restart Neovim.
+After installing, run `:UpdateRemotePlugins` and **restart Neovim**.
 
 ### Manual install
 
@@ -73,11 +74,12 @@ git clone https://github.com/rogerterrazas/aws.nvim \
   ~/.local/share/nvim/site/pack/plugins/start/aws.nvim
 
 cd ~/.local/share/nvim/site/pack/plugins/start/aws.nvim
+npm install -g neovim
 npm install
 npm run build
 ```
 
-Then open Neovim, run `:UpdateRemotePlugins`, and restart.
+Then open Neovim, run `:UpdateRemotePlugins`, and **restart Neovim**.
 
 ### Why is there a build step?
 
@@ -141,6 +143,7 @@ after every install or update.
 The build step did not run. In the plugin directory, run:
 
 ```bash
+npm install -g neovim
 npm install && npm run build
 ```
 

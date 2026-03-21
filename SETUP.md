@@ -21,10 +21,13 @@ instructions for adding new views. For end-user installation, see
 git clone https://github.com/rogerterrazas/aws.nvim
 cd aws.nvim
 
-# 2. Install dependencies
+# 2. Install the global Neovim Node.js provider
+npm install -g neovim
+
+# 3. Install dependencies
 npm install
 
-# 3. Compile TypeScript
+# 4. Compile TypeScript
 npm run build
 ```
 
@@ -34,7 +37,12 @@ Then, in Neovim:
 :UpdateRemotePlugins
 ```
 
-Restart Neovim. The `:NvimAws` command is now available.
+**Restart Neovim.** The `:NvimAws` command is now available.
+
+> **Important:** The `npm install -g neovim` step installs the Node.js provider
+> that Neovim's remote-plugin system requires. Without it, the plugin will fail
+> to load even if the build succeeds. After the very first install you **must**
+> restart Neovim for the provider and the remote-plugin manifest to take effect.
 
 ---
 

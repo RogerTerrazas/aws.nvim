@@ -29,7 +29,7 @@ as a terminal interface with keyboard-driven navigation
 | Requirement      | Version |
 | ---------------- | ------- |
 | Neovim           | ≥ 0.9   |
-| Node.js          | ≥ 16    |
+| Node.js          | ≥ 20    |
 | npm              | any     |
 | neovim (npm pkg) | any     |
 

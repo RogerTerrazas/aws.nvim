@@ -15,11 +15,26 @@ local function check_executable(name)
   if vim.fn.executable(name) == 1 then
     local version = vim.fn.system(name .. ' --version'):gsub('\n', '')
     vim.health.ok(('`%s` found: %s'):format(name, version))
+
+    if name == 'node' then
+      local major = tonumber(version:match('v(%d+)'))
+      if major == nil or major < 20 then
+        vim.health.error(
+          ('Node.js >= 20 is required, but found: %s'):format(version),
+          'Upgrade Node.js to v20 or later (https://nodejs.org).'
+            .. ' If you use a version manager (nvm, fnm, volta),'
+            .. ' run `nvm install 20` (or equivalent) and ensure the correct'
+            .. ' version is active when Neovim starts.'
+        )
+        return false
+      end
+    end
+
     return true
   else
     vim.health.error(
       ('`%s` not found on $PATH'):format(name),
-      ('Install Node.js (https://nodejs.org) and ensure `%s` is available in the'):format(name)
+      ('Install Node.js >= 20 (https://nodejs.org) and ensure `%s` is available in the'):format(name)
         .. ' PATH that Neovim uses. If you use a version manager (nvm, fnm, volta),'
         .. ' initialise it in your shell rc file (e.g. ~/.zshrc) rather than an'
         .. ' interactive-only file.'

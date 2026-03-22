@@ -33,7 +33,7 @@ Lua runtime dependencies.
 2. REQUIREMENTS                                        *aws.nvim-requirements*
 
   - Neovim >= 0.9
-  - Node.js >= 16  (must be on the $PATH Neovim uses)
+  - Node.js >= 20  (must be on the $PATH Neovim uses)
   - npm            (any version)
   - neovim npm package  (`npm install -g neovim`)
   - AWS credentials configured in ~/.aws/config

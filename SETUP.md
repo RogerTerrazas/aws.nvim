@@ -8,7 +8,7 @@ instructions for adding new views. For end-user installation, see
 
 ## Prerequisites
 
-- Node.js >= 16
+- Node.js >= 20
 - npm
 - Neovim >= 0.9 (with the Node.js remote plugin provider available)
 

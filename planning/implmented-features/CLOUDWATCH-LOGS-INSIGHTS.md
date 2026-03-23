@@ -36,6 +36,7 @@ architecture as the DynamoDB query feature.
 | F18 | `c` shortcut on the Home view opens the query form                                                     | Done   |
 | F19 | `:NvimAws route cloudwatch_query` opens the query form at any time                                     | Done   |
 | F20 | All SDK clients use the active profile's credentials and region                                        | Done   |
+| F21 | Each unique query (params hash) opens a distinct results buffer; identical re-submissions reuse it     | Done   |
 
 #### Non-Functional
 
@@ -45,6 +46,7 @@ architecture as the DynamoDB query feature.
 | N2  | Async polling uses `setTimeout`-based sleep loop (no blocking)               | Done   |
 | N3  | TypeScript strict mode passes cleanly                                        | Done   |
 | N4  | All new code covered by unit tests using `aws-sdk-client-mock` and `vi.fn()` | Done   |
+| N5  | Buffer name uniqueness uses a zero-dependency FNV-1a 32-bit hash (no npm packages added)             | Done   |
 
 ### Architecture
 
@@ -56,7 +58,7 @@ src/
 │   ├── query.ts               # startInsightsQuery(), pollQueryResults(), runInsightsQuery()
 │   └── query.test.ts          # 8 tests
 ├── session/
-│   └── index.ts               # createCloudWatchLogsClient() added alongside DynamoDB factory
+│   └── index.ts               # createCloudWatchLogsClient() + hashQueryParams() (FNV-1a buffer-name hash)
 └── views/cloudwatch/
     ├── query/
     │   ├── query.ts           # initializeCWQueryView() + cwQueryViewEntry
@@ -64,8 +66,8 @@ src/
     │   ├── commands.ts        # parseTimeInput(), extractLogGroups(), extractQueryString(), submitCWQuery()
     │   └── commands.test.ts   # 26 tests
     └── query-results/
-        ├── query-results.ts   # initializeCWQueryResultsView() + cwQueryResultsViewEntry
-        ├── query-results.test.ts # 9 tests
+        ├── query-results.ts   # initializeCWQueryResultsView() + cwQueryResultsViewEntry (bufferLabel resolver)
+        ├── query-results.test.ts # 11 tests
         └── commands.ts        # refreshCWQuery(), initializeCWQueryResultsCommands()
 ```
 
@@ -92,7 +94,7 @@ src/
    ```
 
 3. Uncomment desired log groups, edit the query, adjust time and limit
-4. Press `<CR>` → results buffer opens showing `Running...`
+4. Press `<CR>` → a new results buffer (named with a short hash of the query params) opens showing `Running...`
 5. Once the query completes, the buffer is replaced with formatted results:
 
    ```
@@ -111,8 +113,10 @@ src/
    @message:   [ERROR] Another failure
    ```
 
-6. Press `r` to re-run the same query with the time window shifted to now
+6. Press `r` to re-run the same query with the time window shifted to now (opens a new buffer for the refreshed params)
 7. Press `q` to return to the query form
+8. Submit a different query from the form → a second results buffer is created; both buffers remain alive and can be navigated with standard Neovim buffer switching (`:b`, `<C-o>`, etc.)
+   - Submitting the exact same query again reuses the existing buffer instead of fetching from AWS again
 
 ### Keybindings
 

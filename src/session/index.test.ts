@@ -3,6 +3,7 @@ import {
   clearActiveProfile,
   getActiveProfile,
   getBufferTitle,
+  hashQueryParams,
   setActiveProfile,
 } from './index.js'
 
@@ -42,6 +43,57 @@ describe('session', () => {
       clearActiveProfile()
 
       expect(getActiveProfile()).toBeNull()
+    })
+  })
+
+  describe('hashQueryParams', () => {
+    const BASE_PARAMS = {
+      logGroupNames: ['/aws/lambda/my-fn'],
+      queryString: 'filter @message like //',
+      startTime: 1700000000,
+      endTime: 1700003600,
+      limit: 100,
+    }
+
+    it('should return an 8-character hex string', () => {
+      const hash = hashQueryParams(BASE_PARAMS)
+      expect(hash).toMatch(/^[0-9a-f]{8}$/)
+    })
+
+    it('should return the same hash for identical params', () => {
+      expect(hashQueryParams(BASE_PARAMS)).toBe(hashQueryParams(BASE_PARAMS))
+    })
+
+    it('should return different hashes for different query strings', () => {
+      const other = { ...BASE_PARAMS, queryString: 'fields @message' }
+      expect(hashQueryParams(BASE_PARAMS)).not.toBe(hashQueryParams(other))
+    })
+
+    it('should return different hashes for different log groups', () => {
+      const other = { ...BASE_PARAMS, logGroupNames: ['/aws/lambda/other-fn'] }
+      expect(hashQueryParams(BASE_PARAMS)).not.toBe(hashQueryParams(other))
+    })
+
+    it('should return different hashes for different time ranges', () => {
+      const other = { ...BASE_PARAMS, startTime: 1700007200 }
+      expect(hashQueryParams(BASE_PARAMS)).not.toBe(hashQueryParams(other))
+    })
+
+    it('should return different hashes for different limits', () => {
+      const other = { ...BASE_PARAMS, limit: 500 }
+      expect(hashQueryParams(BASE_PARAMS)).not.toBe(hashQueryParams(other))
+    })
+
+    it('should treat log group order as irrelevant (sorted before hashing)', () => {
+      const a = {
+        ...BASE_PARAMS,
+        logGroupNames: ['/aws/lambda/alpha', '/aws/lambda/beta'],
+      }
+      const b = {
+        ...BASE_PARAMS,
+        logGroupNames: ['/aws/lambda/beta', '/aws/lambda/alpha'],
+      }
+      expect(hashQueryParams(a)).toBe(hashQueryParams(b))
     })
   })
 

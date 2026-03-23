@@ -91,3 +91,49 @@ export function getBufferTitle(viewLabel: string): string {
   if (activeProfile.region) parts.push(activeProfile.region)
   return parts.join(' | ')
 }
+
+// ---------------------------------------------------------------------------
+// Query parameter hashing
+// ---------------------------------------------------------------------------
+
+/**
+ * Produce a short (8-char hex) hash of the given CloudWatch Insights query
+ * parameters using the FNV-1a 32-bit algorithm.
+ *
+ * The same parameter set always produces the same hash, and different
+ * parameter sets (with overwhelming probability) produce different hashes.
+ * This is used to generate unique-per-query buffer names so that multiple
+ * in-flight or completed queries can coexist as separate Neovim buffers.
+ *
+ * Example:
+ *   hashQueryParams({ logGroupNames: ['/aws/lambda/fn'], queryString: 'fields @message',
+ *                     startTime: 1700000000, endTime: 1700003600, limit: 100 })
+ *   → 'a1b2c3d4'
+ */
+export function hashQueryParams(params: {
+  logGroupNames: string[]
+  queryString: string
+  startTime: number
+  endTime: number
+  limit: number
+}): string {
+  // Stable serialisation: sort log group names so that order doesn't affect
+  // the hash, then JSON-encode with deterministic key ordering.
+  const stable = JSON.stringify({
+    logGroupNames: [...params.logGroupNames].sort(),
+    queryString: params.queryString,
+    startTime: params.startTime,
+    endTime: params.endTime,
+    limit: params.limit,
+  })
+
+  // FNV-1a 32-bit — no external dependencies required.
+  let hash = 0x811c9dc5 // FNV offset basis
+  for (let i = 0; i < stable.length; i++) {
+    hash ^= stable.charCodeAt(i)
+    // Multiply by FNV prime (0x01000193), keeping within 32 bits.
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+
+  return hash.toString(16).padStart(8, '0')
+}

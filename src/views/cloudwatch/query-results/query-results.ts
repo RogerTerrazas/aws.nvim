@@ -5,7 +5,7 @@ import {
   type InsightsResult,
   runInsightsQuery,
 } from '../../../accessors/cloudwatch/query'
-import { getBufferTitle } from '../../../session/index'
+import { getBufferTitle, hashQueryParams } from '../../../session/index'
 import type { ViewRegistryEntry } from '../../../types'
 import { VIEW_TO_FILETYPE } from '../../../types'
 import { logger } from '../../../utils/logger'
@@ -169,7 +169,10 @@ export async function initializeCWQueryResultsView(
     placeholderLines,
   ])
 
-  const bufferTitle = getBufferTitle('CloudWatch Logs Insights — Results')
+  const hash = hashQueryParams(params)
+  const bufferTitle = getBufferTitle(
+    `CloudWatch Logs Insights — Results | ${hash}`
+  )
   await nvim.call('nvim_buf_set_name', [buffer, bufferTitle])
 
   logger.debug(
@@ -265,7 +268,22 @@ export async function initializeCWQueryResultsView(
 
 export const cwQueryResultsViewEntry: ViewRegistryEntry = {
   name: 'cloudwatch_query_results',
-  bufferLabel: 'CloudWatch Logs Insights — Results',
+  bufferLabel: (logGroupsJson, queryString, startTime, endTime, limit) => {
+    let logGroupNames: string[]
+    try {
+      logGroupNames = JSON.parse(logGroupsJson ?? '') as string[]
+    } catch {
+      logGroupNames = []
+    }
+    const hash = hashQueryParams({
+      logGroupNames,
+      queryString: queryString ?? '',
+      startTime: parseInt(startTime ?? '0', 10),
+      endTime: parseInt(endTime ?? '0', 10),
+      limit: parseInt(limit ?? '0', 10),
+    })
+    return `CloudWatch Logs Insights — Results | ${hash}`
+  },
   initialize: initializeCWQueryResultsView,
   actions: {
     refresh: refreshCWQuery,

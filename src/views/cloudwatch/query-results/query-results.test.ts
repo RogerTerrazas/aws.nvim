@@ -201,6 +201,95 @@ describe('initializeCWQueryResultsView', () => {
       expect(modifiableFalseCalls.length).toBeGreaterThanOrEqual(1)
     })
 
+    it('should give each unique query a distinct buffer name', async () => {
+      cwMock.on(StartQueryCommand).resolves({ queryId: 'q-1' })
+      cwMock.on(GetQueryResultsCommand).resolves({
+        status: QueryStatus.Complete,
+        results: [],
+        statistics: {},
+      })
+
+      // First query
+      const plugin1 = createMockPlugin()
+      const window1 = { id: 1 } as unknown as Window
+      const promise1 = initializeCWQueryResultsView(plugin1, window1, BASE_ARGS)
+      await vi.runAllTimersAsync()
+      await promise1
+
+      // Second query — different query string
+      const plugin2 = createMockPlugin()
+      const window2 = { id: 2 } as unknown as Window
+      const differentArgs: string[] = [
+        BASE_ARGS[0] ?? '',
+        'fields @message | limit 20', // different query string
+        BASE_ARGS[2] ?? '',
+        BASE_ARGS[3] ?? '',
+        BASE_ARGS[4] ?? '',
+      ]
+      const promise2 = initializeCWQueryResultsView(
+        plugin2,
+        window2,
+        differentArgs
+      )
+      await vi.runAllTimersAsync()
+      await promise2
+
+      const getName = (plugin: NvimPlugin): string => {
+        const calls: Array<unknown[]> = (
+          plugin.nvim.call as ReturnType<typeof vi.fn>
+        ).mock.calls
+        const nameCall = calls.find((c) => c[0] === 'nvim_buf_set_name')
+        return (nameCall as [string, [unknown, string]])[1][1] as string
+      }
+
+      const name1 = getName(plugin1)
+      const name2 = getName(plugin2)
+
+      // Both names should include the hash segment
+      expect(name1).toMatch(/Results \| [0-9a-f]{8}$/)
+      expect(name2).toMatch(/Results \| [0-9a-f]{8}$/)
+
+      // The two queries must produce different buffer names
+      expect(name1).not.toBe(name2)
+    })
+
+    it('should give identical queries the same buffer name', async () => {
+      cwMock.on(StartQueryCommand).resolves({ queryId: 'q-1' })
+      cwMock.on(GetQueryResultsCommand).resolves({
+        status: QueryStatus.Complete,
+        results: [],
+        statistics: {},
+      })
+
+      const plugin1 = createMockPlugin()
+      const promise1 = initializeCWQueryResultsView(
+        plugin1,
+        { id: 1 } as unknown as Window,
+        BASE_ARGS
+      )
+      await vi.runAllTimersAsync()
+      await promise1
+
+      const plugin2 = createMockPlugin()
+      const promise2 = initializeCWQueryResultsView(
+        plugin2,
+        { id: 2 } as unknown as Window,
+        BASE_ARGS
+      )
+      await vi.runAllTimersAsync()
+      await promise2
+
+      const getName = (plugin: NvimPlugin): string => {
+        const calls: Array<unknown[]> = (
+          plugin.nvim.call as ReturnType<typeof vi.fn>
+        ).mock.calls
+        const nameCall = calls.find((c) => c[0] === 'nvim_buf_set_name')
+        return (nameCall as [string, [unknown, string]])[1][1] as string
+      }
+
+      expect(getName(plugin1)).toBe(getName(plugin2))
+    })
+
     it('should set the buffer on the window', async () => {
       cwMock.on(StartQueryCommand).resolves({ queryId: 'q-1' })
       cwMock.on(GetQueryResultsCommand).resolves({
